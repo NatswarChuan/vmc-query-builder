@@ -1,17 +1,5 @@
 package io.github.natswarchuan.vmc.core.persistence;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.exception.VMCException;
@@ -23,6 +11,17 @@ import io.github.natswarchuan.vmc.core.persistence.handler.CrudExecutor;
 import io.github.natswarchuan.vmc.core.persistence.handler.RelationshipSynchronizer;
 import io.github.natswarchuan.vmc.core.persistence.mapper.GenericQueryExecutorMapper;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Quản lý các thao tác bền bỉ (persistence) cho các thực thể (entity). Lớp này điều phối các
@@ -145,7 +144,7 @@ public class VMCPersistenceManager {
       Set<String> relationsToCascade = options.getRelationsToCascade();
       for (String relationName : relationsToCascade) {
         RelationMetadata relMeta = metadata.getRelations().get(relationName);
-        if (relMeta == null || !relMeta.isInverseSide()) {
+        if (relMeta == null) {
           continue;
         }
 
@@ -155,12 +154,17 @@ public class VMCPersistenceManager {
         if (relatedValue == null) continue;
 
         if (relMeta.getType() == RelationMetadata.RelationType.ONE_TO_ONE) {
-          Model relatedModel = (Model) relatedValue;
-          saveGraph(relatedModel, options, processedEntities);
+          if (relMeta.isInverseSide()) {
+            Model relatedModel = (Model) relatedValue;
+            saveGraph(relatedModel, options, processedEntities);
+          }
         } else if (relMeta.getType() == RelationMetadata.RelationType.ONE_TO_MANY) {
-          relationshipSynchronizer.synchronizeOneToMany(
-              model, relMeta, (Collection<?>) relatedValue, options, processedEntities);
-        } else if (relMeta.getType() == RelationMetadata.RelationType.MANY_TO_MANY) {
+          if (relMeta.isInverseSide()) {
+            relationshipSynchronizer.synchronizeOneToMany(
+                model, relMeta, (Collection<?>) relatedValue, options, processedEntities);
+          }
+        }
+        else if (relMeta.getType() == RelationMetadata.RelationType.MANY_TO_MANY) {
           relationshipSynchronizer.synchronizeManyToMany(
               model, relMeta, (Collection<?>) relatedValue, options, processedEntities);
         }

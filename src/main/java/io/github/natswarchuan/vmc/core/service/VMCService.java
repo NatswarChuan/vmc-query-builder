@@ -1,12 +1,11 @@
 package io.github.natswarchuan.vmc.core.service;
 
-import java.util.List;
-import java.util.Optional;
-
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface định nghĩa các hoạt động nghiệp vụ (business operations) tiêu chuẩn cho một dịch vụ
@@ -16,9 +15,7 @@ import io.github.natswarchuan.vmc.core.query.builder.Paginator;
  * phổ biến khác ở tầng service, giúp trừu tượng hóa logic truy cập dữ liệu từ các repository.
  *
  * @param <T> Kiểu của thực thể (entity) mà service này quản lý.
- * @param <ID> Kiểu của khóa chính (primary key) của thực thể.
- * 
- * @author NatswarChuan
+ * @param <ID> Kiểu của khóa chính (primary key) của thực thể. * @author NatswarChuan
  */
 public interface VMCService<T extends Model, ID> {
 
@@ -224,4 +221,84 @@ public interface VMCService<T extends Model, ID> {
    * @return tổng số thực thể.
    */
   long count();
+
+  // --- CÁC PHƯƠNG THỨC MỚI ĐƯỢC THÊM (ĐÃ SỬA LỖI TYPE CLASH) ---
+
+  /**
+   * Tạo một thực thể mới từ một DTO và trả về một DTO khác.
+   *
+   * @param requestDto DTO chứa dữ liệu để tạo thực thể.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O createFromDto(
+      I requestDto, Class<O> responseDtoClass);
+
+  /**
+   * Tạo một thực thể mới từ một DTO với các tùy chọn lưu tùy chỉnh và trả về một DTO khác.
+   *
+   * @param requestDto DTO chứa dữ liệu để tạo thực thể.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param options Các tùy chọn để kiểm soát hành vi lưu.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O createFromDto(
+      I requestDto, Class<O> responseDtoClass, SaveOptions options);
+
+  /**
+   * Cập nhật một thực thể đã tồn tại từ một DTO và trả về một DTO khác.
+   *
+   * @param id ID của thực thể cần cập nhật.
+   * @param requestDto DTO chứa dữ liệu cập nhật.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O updateFromDto(
+      ID id, I requestDto, Class<O> responseDtoClass);
+
+  /**
+   * Cập nhật một thực thể đã tồn tại từ một DTO với các tùy chọn lưu tùy chỉnh và trả về một DTO
+   * khác.
+   *
+   * @param id ID của thực thể cần cập nhật.
+   * @param requestDto DTO chứa dữ liệu cập nhật.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param options Các tùy chọn để kiểm soát hành vi lưu.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O updateFromDto(
+      ID id, I requestDto, Class<O> responseDtoClass, SaveOptions options);
+
+  /**
+   * Lưu một thực thể từ một DTO và trả về một DTO khác.
+   *
+   * @param requestDto DTO chứa dữ liệu cần lưu.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O saveFromDto(
+      I requestDto, Class<O> responseDtoClass);
+
+  /**
+   * Lưu một thực thể từ một DTO với các tùy chọn lưu tùy chỉnh và trả về một DTO khác.
+   *
+   * @param requestDto DTO chứa dữ liệu cần lưu.
+   * @param responseDtoClass Lớp của DTO trả về.
+   * @param options Các tùy chọn để kiểm soát hành vi lưu.
+   * @param <I> Kiểu của DTO đầu vào.
+   * @param <O> Kiểu của DTO đầu ra.
+   * @return DTO trả về đã được cập nhật.
+   */
+  <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O saveFromDto(
+      I requestDto, Class<O> responseDtoClass, SaveOptions options);
 }

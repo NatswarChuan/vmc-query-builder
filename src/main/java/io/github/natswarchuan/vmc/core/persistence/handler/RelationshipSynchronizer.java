@@ -1,15 +1,5 @@
 package io.github.natswarchuan.vmc.core.persistence.handler;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
 import io.github.natswarchuan.vmc.core.mapping.JoinTableMetadata;
@@ -19,6 +9,15 @@ import io.github.natswarchuan.vmc.core.persistence.VMCPersistenceManager;
 import io.github.natswarchuan.vmc.core.persistence.mapper.GenericQueryExecutorMapper;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.util.BeanUtil;
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Đồng bộ hóa trạng thái của các mối quan hệ (OneToMany, ManyToMany) giữa trạng thái trong bộ nhớ
@@ -169,18 +168,31 @@ public class RelationshipSynchronizer {
       }
 
       if (!idsToAdd.isEmpty()) {
+        StringBuilder valuesClause = new StringBuilder();
+        Map<String, Object> batchParams = new HashMap<>();
+        batchParams.put("ownerId", ownerId);
+        int i = 0;
         for (Object childId : idsToAdd) {
-          String insertSql =
-              String.format(
-                  "INSERT INTO %s (%s, %s) VALUES (#{params.ownerId}, #{params.childId})",
-                  joinTable.getTableName(),
-                  joinTable.getJoinColumn(),
-                  joinTable.getInverseJoinColumn());
-          Map<String, Object> params = new HashMap<>();
-          params.put("ownerId", ownerId);
-          params.put("childId", childId);
-          getQueryExecutor().insert(insertSql, params);
+          if (i > 0) {
+            valuesClause.append(", ");
+          }
+          String paramName = "childId" + i;
+          valuesClause.append("(:ownerId, :").append(paramName).append(")");
+          batchParams.put(paramName, childId);
+          i++;
         }
+
+        String insertSql =
+            String.format(
+                "INSERT INTO %s (%s, %s) VALUES %s",
+                joinTable.getTableName(),
+                joinTable.getJoinColumn(),
+                joinTable.getInverseJoinColumn(),
+                valuesClause.toString());
+
+        String myBatisSql = insertSql.replaceAll(":(\\w+)", "#{params.$1}");
+
+        getQueryExecutor().insert(myBatisSql, batchParams);
       }
     } catch (Exception e) {
 
@@ -188,7 +200,16 @@ public class RelationshipSynchronizer {
   }
 
   private String getInClauseValues(Set<Object> ids) {
-    return ids.stream().map(String::valueOf).collect(Collectors.joining(","));
+    return ids.stream()
+        .map(
+            id -> {
+              if (id instanceof Number) {
+                return id.toString();
+              } else {
+                return "'" + id.toString().replace("'", "''") + "'";
+              }
+            })
+        .collect(Collectors.joining(","));
   }
 
   private void setInverseSide(Model child, Model parent, RelationMetadata parentRelMeta)

@@ -36,7 +36,7 @@ import io.github.natswarchuan.vmc.core.util.BeanUtil;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class VMCRepositoryProxyHandler implements InvocationHandler {
-
+// 
   private final Class<? extends Model> entityClass;
   private VMCPersistenceManager persistenceManager;
 

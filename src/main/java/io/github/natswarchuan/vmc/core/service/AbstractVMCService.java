@@ -1,16 +1,15 @@
 package io.github.natswarchuan.vmc.core.service;
 
-import java.util.List;
-import java.util.Optional;
-import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
-
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.exception.VMCException;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
 import io.github.natswarchuan.vmc.core.repository.VMCRepository;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Một lớp trừu tượng cơ sở cung cấp triển khai mặc định cho các phương thức trong {@link
@@ -93,7 +92,7 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
   public <D extends BaseDto<T, D>> D createFromDto(D dto, SaveOptions options) {
     T entity = dto.toEntity();
     T savedEntity = this.create(entity, options);
-    return (D) dto.toDto(savedEntity);
+    return dto.toDto(savedEntity);
   }
 
   @Override
@@ -121,14 +120,14 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
 
   @Override
   public <D extends BaseDto<T, D>> D updateFromDto(ID id, D dto, SaveOptions options) {
-    T entity =
-        repository
-            .findById(id)
-            .orElseThrow(
-                () -> new VMCException(HttpStatus.NOT_FOUND, "Entity not found with id: " + id));
-
-    T updatedEntity = this.update(id, entity, options);
-    return (D) dto.toDto(updatedEntity);
+    if (!repository.findById(id).isPresent()) {
+      throw new VMCException(
+          HttpStatus.NOT_FOUND, "Entity not found with id: " + id + " for update.");
+    }
+    T entityFromDto = dto.toEntity();
+    entityFromDto.setPrimaryKey(id);
+    T updatedEntity = this.save(entityFromDto, options);
+    return dto.toDto(updatedEntity);
   }
 
   @Override
@@ -155,7 +154,7 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
   public <D extends BaseDto<T, D>> D saveFromDto(D dto, SaveOptions options) {
     T entity = dto.toEntity();
     T savedEntity = repository.save(entity, options);
-    return (D) dto.toDto(savedEntity);
+    return dto.toDto(savedEntity);
   }
 
   @Override
@@ -175,5 +174,72 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
   @Override
   public long count() {
     return repository.count();
+  }
+
+  // --- TRIỂN KHAI CÁC PHƯƠNG THỨC MỚI (ĐÃ SỬA LỖI TYPE SAFETY) ---
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O createFromDto(
+      I requestDto, Class<O> responseDtoClass) {
+    return createFromDto(requestDto, responseDtoClass, new SaveOptions());
+  }
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O createFromDto(
+      I requestDto, Class<O> responseDtoClass, SaveOptions options) {
+    T entity = requestDto.toEntity();
+    T savedEntity = this.create(entity, options);
+    try {
+      O responseDto = responseDtoClass.getDeclaredConstructor().newInstance();
+      return responseDto.toDto(savedEntity);
+    } catch (Exception e) {
+      throw new VMCException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Could not create response DTO instance.", e);
+    }
+  }
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O updateFromDto(
+      ID id, I requestDto, Class<O> responseDtoClass) {
+    return updateFromDto(id, requestDto, responseDtoClass, new SaveOptions());
+  }
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O updateFromDto(
+      ID id, I requestDto, Class<O> responseDtoClass, SaveOptions options) {
+    if (!repository.findById(id).isPresent()) {
+      throw new VMCException(
+          HttpStatus.NOT_FOUND, "Entity not found with id: " + id + " for update.");
+    }
+    T entityFromDto = requestDto.toEntity();
+    entityFromDto.setPrimaryKey(id);
+    T updatedEntity = this.save(entityFromDto, options);
+    try {
+      O responseDto = responseDtoClass.getDeclaredConstructor().newInstance();
+      return responseDto.toDto(updatedEntity);
+    } catch (Exception e) {
+      throw new VMCException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Could not create response DTO instance.", e);
+    }
+  }
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O saveFromDto(
+      I requestDto, Class<O> responseDtoClass) {
+    return saveFromDto(requestDto, responseDtoClass, new SaveOptions());
+  }
+
+  @Override
+  public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O saveFromDto(
+      I requestDto, Class<O> responseDtoClass, SaveOptions options) {
+    T entity = requestDto.toEntity();
+    T savedEntity = this.save(entity, options);
+    try {
+      O responseDto = responseDtoClass.getDeclaredConstructor().newInstance();
+      return responseDto.toDto(savedEntity);
+    } catch (Exception e) {
+      throw new VMCException(
+          HttpStatus.INTERNAL_SERVER_ERROR, "Could not create response DTO instance.", e);
+    }
   }
 }
