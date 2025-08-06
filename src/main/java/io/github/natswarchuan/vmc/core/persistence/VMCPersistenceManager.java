@@ -10,6 +10,7 @@ import io.github.natswarchuan.vmc.core.persistence.handler.CascadeRemoveHandler;
 import io.github.natswarchuan.vmc.core.persistence.handler.CrudExecutor;
 import io.github.natswarchuan.vmc.core.persistence.handler.RelationshipSynchronizer;
 import io.github.natswarchuan.vmc.core.persistence.mapper.GenericQueryExecutorMapper;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -141,6 +142,20 @@ public class VMCPersistenceManager {
    */
   @Transactional
   public void remove(Model model) {
+    remove(model, RemoveOptions.defaults()); // <- THAY ĐỔI
+  }
+
+  /**
+   * Xóa một thực thể khỏi cơ sở dữ liệu với các tùy chọn tùy chỉnh.
+   *
+   * <p>Phương thức này sẽ xử lý các hành động xóa theo tầng trước, sau đó mới xóa bản thân thực
+   * thể.
+   *
+   * @param model Thực thể cần xóa.
+   * @param options Các tùy chọn để kiểm soát hành vi xóa.
+   */
+  @Transactional
+  public void remove(Model model, RemoveOptions options) { // <- THÊM MỚI
     if (model == null) {
       return;
     }
@@ -151,7 +166,7 @@ public class VMCPersistenceManager {
         return;
       }
 
-      cascadeRemoveHandler.handleCascades(model);
+      cascadeRemoveHandler.handleCascades(model, options); // <- THAY ĐỔI
 
       String sql =
           String.format(

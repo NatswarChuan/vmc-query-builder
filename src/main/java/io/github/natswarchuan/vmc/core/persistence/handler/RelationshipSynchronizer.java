@@ -68,8 +68,7 @@ public class RelationshipSynchronizer {
    * <ul>
    *   <li>Lưu tất cả các thực thể con trong collection "mong muốn".
    *   <li>Xác định các thực thể con cần được hủy liên kết (disassociated).
-   *   <li>Nếu {@code orphanRemoval} được bật, các thực thể con bị hủy liên kết sẽ bị xóa.
-   *   <li>Nếu không, khóa ngoại của chúng sẽ được cập nhật thành NULL.
+   *   <li>Khóa ngoại của các thực thể bị hủy liên kết sẽ được cập nhật thành NULL.
    * </ul>
    *
    * @param owner Thực thể cha (phía "one").
@@ -128,29 +127,21 @@ public class RelationshipSynchronizer {
       idsToDisassociate.removeAll(desiredChildIds);
 
       if (!idsToDisassociate.isEmpty()) {
-        if (relMeta.isOrphanRemoval()) {
-
-          String deleteSql =
-              String.format(
-                  "DELETE FROM %s WHERE %s IN (%s)",
-                  childMeta.getTableName(),
-                  childMeta.getPrimaryKeyColumnName(),
-                  getInClauseValues(idsToDisassociate));
-          getQueryExecutor().delete(deleteSql, Collections.emptyMap());
-        } else {
-
-          String updateSql =
-              String.format(
-                  "UPDATE %s SET %s = NULL WHERE %s IN (%s)",
-                  childMeta.getTableName(),
-                  fkColumn,
-                  childMeta.getPrimaryKeyColumnName(),
-                  getInClauseValues(idsToDisassociate));
-          getQueryExecutor().update(updateSql, Collections.emptyMap());
-        }
+        String updateSql =
+            String.format(
+                "UPDATE %s SET %s = NULL WHERE %s IN (%s)",
+                childMeta.getTableName(),
+                fkColumn,
+                childMeta.getPrimaryKeyColumnName(),
+                getInClauseValues(idsToDisassociate));
+        getQueryExecutor().update(updateSql, Collections.emptyMap());
       }
     } catch (Exception e) {
 
+      throw new VMCException(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to synchronize One-to-Many relationship for " + relMeta.getFieldName(),
+          e);
     }
   }
 
@@ -254,7 +245,10 @@ public class RelationshipSynchronizer {
         getQueryExecutor().insert(myBatisSql, batchParams);
       }
     } catch (Exception e) {
-
+      throw new VMCException(
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Failed to synchronize Many-to-Many relationship for " + relMeta.getFieldName(),
+          e);
     }
   }
 

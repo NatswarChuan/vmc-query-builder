@@ -35,9 +35,6 @@ public class RelationMetadata {
   /** Cho biết cột khóa ngoại có thể nhận giá trị NULL hay không. */
   private final boolean foreignKeyNullable;
 
-  /** Cho biết có nên xóa các thực thể con "mồ côi" (không còn được tham chiếu) hay không. */
-  private final boolean orphanRemoval;
-
   /** Siêu dữ liệu của bảng liên kết, chỉ được sử dụng cho quan hệ Many-to-Many. */
   private final JoinTableMetadata joinTable;
 

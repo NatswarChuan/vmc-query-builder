@@ -7,6 +7,7 @@ import io.github.natswarchuan.vmc.core.exception.VMCException;
 import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
 import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
 import io.github.natswarchuan.vmc.core.persistence.VMCPersistenceManager;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
 import io.github.natswarchuan.vmc.core.query.builder.VMCQueryBuilder;
@@ -28,18 +29,24 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 
 /**
- * Một {@link InvocationHandler} để xử lý các lời gọi phương thức trên các interface repository của
- * VMC.
+ * Một trình xử lý lời gọi (invocation handler) trung tâm cho các proxy của VMC Repository.
  *
- * <p>Lớp này là trung tâm của cơ chế proxy cho repository. Nó chặn mọi lời gọi phương thức đến một
- * interface repository, phân tích phương thức đó, và sau đó ủy quyền cho handler thích hợp:
+ * <p>Lớp này là "bộ não" đằng sau các interface repository của framework. Khi một phương thức trên
+ * một interface kế thừa từ {@code VMCRepository} được gọi, phương thức {@link #invoke(Object,
+ * Method, Object[])} của handler này sẽ được thực thi. Nó chịu trách nhiệm phân tích phương thức
+ * được gọi và quyết định cách xử lý phù hợp, bao gồm:
  *
  * <ul>
- *   <li>{@link CustomQueryHandler} cho các phương thức có annotation {@code @VMCQuery}.
- *   <li>{@link DerivedQueryHandler} cho các phương thức truy vấn dẫn xuất từ tên.
- *   <li>Xử lý trực tiếp các phương thức CRUD tiêu chuẩn (save, findById, findAll, v.v.).
+ *   <li>Thực thi các câu lệnh SQL gốc được định nghĩa bằng {@link VMCQuery}.
+ *   <li>Triển khai các phương thức CRUD tiêu chuẩn (như save, findById, findAll, delete).
+ *   <li>Phân tích và thực thi các truy vấn dẫn xuất từ tên phương thức (derived queries).
  * </ul>
  *
+ * <p>Nó ủy quyền các tác vụ cụ thể cho các handler chuyên biệt như {@link CustomQueryHandler} và
+ * {@link DerivedQueryHandler}, và sử dụng {@link VMCPersistenceManager} cho các thao tác bền bỉ.
+ *
+ * @see VMCRepositoryFactoryBean
+ * @see InvocationHandler
  * @author NatswarChuan
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
@@ -52,14 +59,28 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   private final DerivedQueryHandler derivedQueryHandler;
 
   /**
-   * Biểu thức chính quy (regex) để phân tích các phương thức truy vấn dẫn xuất. Ví dụ: {@code
-   * findDtoFirstByNameOrderByEmailDesc}.
+   * Biểu thức chính quy để phân tích các truy vấn dẫn xuất từ tên phương thức.
+   *
+   * <p>Ví dụ, một phương thức như {@code findDtoAllByNameOrderByCreatedAtDesc} sẽ được phân tích
+   * thành các nhóm:
+   *
+   * <ul>
+   *   <li>Group 1 (action): "find"
+   *   <li>Group 2 (dto): "Dto"
+   *   <li>Group 3 (quantifier): "All"
+   *   <li>Group 4 (criteria): "Name"
+   *   <li>Group 5 (orderByClause): "OrderByCreatedAtDesc"
+   *   <li>Group 6 (orderBy): "CreatedAtDesc"
+   * </ul>
    */
   private static final Pattern DERIVED_QUERY_PATTERN =
       Pattern.compile("^(find|get|count|delete|remove)(Dto)?(All|First)?By(.*?)(OrderBy(.+))?$");
 
   /**
-   * Khởi tạo một proxy handler mới cho một interface repository cụ thể.
+   * Khởi tạo một handler mới cho một interface repository cụ thể.
+   *
+   * <p>Constructor này trích xuất kiểu thực thể (entity class) từ generic type của interface
+   * repository và khởi tạo các handler con.
    *
    * @param repositoryInterface Lớp của interface repository cần tạo proxy.
    */
@@ -74,7 +95,10 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Lấy instance của {@code VMCPersistenceManager} một cách lười biếng (lazy).
+   * Lấy instance của {@code VMCPersistenceManager} một cách lười biếng.
+   *
+   * <p>Việc này đảm bảo rằng bean chỉ được lấy từ Spring context khi cần thiết lần đầu tiên, tránh
+   * việc phải có Spring context ngay khi proxy được tạo.
    *
    * @return instance của {@code VMCPersistenceManager}.
    */
@@ -86,16 +110,24 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Chặn và xử lý một lời gọi phương thức trên proxy của repository.
+   * Chặn và xử lý tất cả các lời gọi phương thức trên interface repository.
    *
-   * <p>Đây là phương thức chính của {@code InvocationHandler}. Nó quyết định cách xử lý một lời gọi
-   * phương thức dựa trên annotation hoặc tên của nó.
+   * <p>Đây là phương thức cốt lõi của {@link InvocationHandler}. Nó quyết định chiến lược xử lý dựa
+   * trên annotation và tên của phương thức được gọi theo thứ tự ưu tiên:
+   *
+   * <ol>
+   *   <li><b>{@link VMCQuery}</b>: Nếu có, xử lý như một truy vấn SQL tùy chỉnh.
+   *   <li><b>Phương thức tiêu chuẩn</b>: Nếu là một trong các phương thức CRUD cơ bản, xử lý trực
+   *       tiếp.
+   *   <li><b>Truy vấn dẫn xuất</b>: Nếu tên phương thức khớp với mẫu, phân tích và thực thi.
+   *   <li>Nếu không khớp, ném ngoại lệ {@code VMCException}.
+   * </ol>
    *
    * @param proxy Đối tượng proxy mà phương thức được gọi trên đó.
-   * @param method Phương thức {@code Method} tương ứng với lời gọi trên interface.
-   * @param args Mảng các đối số được truyền cho phương thức.
-   * @return Kết quả trả về từ việc thực thi phương thức.
-   * @throws Throwable nếu có lỗi xảy ra.
+   * @param method Phương thức tương ứng với lời gọi trên interface.
+   * @param args Mảng các đối số được truyền vào phương thức.
+   * @return Kết quả từ việc thực thi phương thức.
+   * @throws Throwable nếu có lỗi xảy ra trong quá trình xử lý.
    */
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -104,9 +136,8 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
       return customQueryHandler.handle(method, args, entityClass);
     }
 
-    Object result = handleStandardMethods(method, args);
-    if (result != null) {
-      return result;
+    if (isStandardMethod(method.getName())) {
+      return handleStandardMethods(method, args);
     }
 
     Matcher matcher = DERIVED_QUERY_PATTERN.matcher(method.getName());
@@ -119,12 +150,31 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Xử lý các phương thức CRUD tiêu chuẩn được định nghĩa trong {@code VMCRepository}.
+   * Kiểm tra xem một tên phương thức có phải là một trong các phương thức tiêu chuẩn của repository
+   * hay không.
    *
-   * @param method Phương thức cần xử lý.
+   * @param methodName Tên của phương thức cần kiểm tra.
+   * @return {@code true} nếu là phương thức tiêu chuẩn, ngược lại là {@code false}.
+   */
+  private boolean isStandardMethod(String methodName) {
+    return methodName.equals("save")
+        || methodName.equals("saveAll")
+        || methodName.equals("saveDto")
+        || methodName.equals("saveAllDtos")
+        || methodName.equals("findById")
+        || methodName.equals("findAll")
+        || methodName.equals("delete")
+        || methodName.equals("count")
+        || methodName.equals("findByIdGetDto")
+        || methodName.equals("findAllGetDtos");
+  }
+
+  /**
+   * Xử lý việc thực thi các phương thức repository tiêu chuẩn.
+   *
+   * @param method Phương thức đã được gọi.
    * @param args Các đối số của phương thức.
-   * @return Kết quả của phương thức, hoặc {@code null} nếu phương thức không phải là một phương
-   *     thức tiêu chuẩn.
+   * @return Kết quả của việc thực thi.
    */
   private Object handleStandardMethods(Method method, Object[] args) {
     String methodName = method.getName();
@@ -155,18 +205,27 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
       return getPersistenceManager().saveAllDtos(dtos, createSaveOptionsFromDto(iterator.next()));
     }
     if ("findById".equals(methodName)) {
+
       return VMCQueryBuilder.from(entityClass).with(getAllRelationNames()).findById(args[0]);
     }
     if ("findAll".equals(methodName)) {
       VMCQueryBuilder builder = VMCQueryBuilder.from(entityClass).with(getAllRelationNames());
+
       return (args != null && args.length == 2)
           ? builder.paginate((int) args[0], (int) args[1])
           : builder.get();
     }
+
     if ("delete".equals(methodName)) {
-      getPersistenceManager().remove((Model) args[0]);
-      return new Object();
+      Model entity = (Model) args[0];
+      if (args.length == 2 && args[1] instanceof RemoveOptions) {
+        getPersistenceManager().remove(entity, (RemoveOptions) args[1]);
+      } else if (args.length == 1) {
+        getPersistenceManager().remove(entity, RemoveOptions.defaults());
+      }
+      return null;
     }
+
     if ("count".equals(methodName) && (args == null || args.length == 0)) {
       return VMCQueryBuilder.from(entityClass).count();
     }
@@ -181,13 +240,13 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Xử lý logic cho phương thức {@code findByIdGetDto}.
+   * Xử lý logic cho phương thức {@code findByIdGetDto(ID id, Class<D> dtoClass)}.
    *
    * @param <T> Kiểu của Entity.
    * @param <D> Kiểu của DTO.
-   * @param <ID> Kiểu của ID.
-   * @param args Mảng đối số chứa ID và lớp DTO.
-   * @return Một {@code Optional<D>} chứa DTO nếu tìm thấy.
+   * @param <ID> Kiểu của khóa chính.
+   * @param args Mảng các đối số gồm ID và lớp DTO.
+   * @return Một {@link Optional} chứa DTO nếu tìm thấy.
    */
   private <T extends Model, D extends BaseDto<T, D>, ID> Optional<D> handleFindByIdGetDto(
       Object[] args) {
@@ -199,12 +258,12 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Xử lý logic cho phương thức {@code findAllGetDtos}.
+   * Xử lý logic cho phương thức {@code findAllGetDtos(Class<D> dtoClass)}.
    *
    * @param <T> Kiểu của Entity.
    * @param <D> Kiểu của DTO.
    * @param args Mảng đối số chứa lớp DTO.
-   * @return Một {@code List<D>} chứa các DTO.
+   * @return Một danh sách các DTO.
    */
   private <T extends Model, D extends BaseDto<T, D>> List<D> handleFindAllGetDtos(Object[] args) {
     Class<D> dtoClass = (Class<D>) args[0];
@@ -215,12 +274,12 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Xử lý logic cho phương thức {@code findAllGetDtos} có phân trang.
+   * Xử lý logic cho phương thức {@code findAllGetDtos(int page, int perPage, Class<D> dtoClass)}.
    *
    * @param <T> Kiểu của Entity.
    * @param <D> Kiểu của DTO.
    * @param args Mảng đối số chứa thông tin phân trang và lớp DTO.
-   * @return Một {@code Paginator<D>} chứa dữ liệu DTO đã phân trang.
+   * @return Một {@link Paginator} chứa dữ liệu DTO.
    */
   private <T extends Model, D extends BaseDto<T, D>> Paginator<D> handleFindAllGetDtosPaginated(
       Object[] args) {
@@ -248,6 +307,7 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
    * @param entity Thực thể cần chuyển đổi.
    * @param dtoClass Lớp của DTO đích.
    * @return Một instance DTO đã được điền dữ liệu.
+   * @throws VMCException nếu không thể tạo hoặc chuyển đổi DTO.
    */
   private <T extends Model, D extends BaseDto<T, D>> D convertToDto(T entity, Class<D> dtoClass) {
     try {
@@ -261,12 +321,12 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   /**
    * Tự động tạo một đối tượng {@link SaveOptions} từ một DTO.
    *
-   * <p>Phương thức này duyệt qua các trường của DTO, nếu một trường có tên trùng với một mối quan
-   * hệ trong entity và giá trị của nó không null, mối quan hệ đó sẽ được thêm vào {@code
-   * SaveOptions} để được lưu theo tầng (cascade).
+   * <p>Phương thức này duyệt qua các trường của DTO. Nếu một trường là một mối quan hệ (quan hệ
+   * lồng) và không phải là null, tên của mối quan hệ đó sẽ được thêm vào {@code SaveOptions} để
+   * kích hoạt lưu theo tầng (cascade save).
    *
-   * @param dto Đối tượng DTO nguồn.
-   * @return Một instance của {@code SaveOptions} đã được cấu hình.
+   * @param dto Đối tượng DTO để kiểm tra.
+   * @return Một đối tượng {@code SaveOptions} đã được cấu hình.
    */
   private SaveOptions createSaveOptionsFromDto(BaseDto<?, ?> dto) {
     SaveOptions saveOptions = new SaveOptions();
@@ -286,7 +346,7 @@ public class VMCRepositoryProxyHandler implements InvocationHandler {
   }
 
   /**
-   * Lấy tất cả tên của các mối quan hệ từ metadata của một thực thể.
+   * Lấy tất cả tên của các mối quan hệ từ metadata của thực thể.
    *
    * @return Một mảng chuỗi chứa tên của tất cả các mối quan hệ.
    */

@@ -1,12 +1,13 @@
 package io.github.natswarchuan.vmc.core.persistence.lazy;
 
+import io.github.natswarchuan.vmc.core.entity.Model;
+import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
+import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
+import io.github.natswarchuan.vmc.core.query.builder.VMCQueryBuilder;
+import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
 import java.lang.reflect.Method;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
-
-import io.github.natswarchuan.vmc.core.entity.Model;
-import io.github.natswarchuan.vmc.core.query.builder.VMCQueryBuilder;
-import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
 
 /**
  * Một bộ chặn phương thức (Method Interceptor) của CGLIB để triển khai tải lười (lazy loading) cho
@@ -22,6 +23,7 @@ public class LazyLoadInterceptor implements MethodInterceptor {
   private final Class<? extends Model> targetClass;
   private final String queryColumn;
   private final Object queryValue;
+  private final String excludedRelationName;
   private Object target = null;
   private boolean initialized = false;
 
@@ -29,15 +31,20 @@ public class LazyLoadInterceptor implements MethodInterceptor {
    * Khởi tạo một LazyLoadInterceptor mới.
    *
    * @param targetClass Lớp của thực thể cần được tải lười.
-   * @param queryColumn Tên cột trong cơ sở dữ liệu được dùng để truy vấn (thường là khóa chính hoặc
-   *     khóa ngoại).
+   * @param queryColumn Tên cột trong cơ sở dữ liệu được dùng để truy vấn.
    * @param queryValue Giá trị của cột dùng để truy vấn.
+   * @param excludedRelationName Tên của mối quan hệ ngược lại cần được loại trừ khỏi eager loading
+   *     để tránh đệ quy.
    */
   public LazyLoadInterceptor(
-      Class<? extends Model> targetClass, String queryColumn, Object queryValue) {
+      Class<? extends Model> targetClass,
+      String queryColumn,
+      Object queryValue,
+      String excludedRelationName) {
     this.targetClass = targetClass;
     this.queryColumn = queryColumn;
     this.queryValue = queryValue;
+    this.excludedRelationName = excludedRelationName;
   }
 
   /**
@@ -53,24 +60,39 @@ public class LazyLoadInterceptor implements MethodInterceptor {
   @Override
   public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy)
       throws Throwable {
-    if ("finalize".equals(method.getName())) return null;
+    if ("finalize".equals(method.getName())) {
+      return null;
+    }
 
     if (target == null && !initialized) {
       initialized = true;
       if (queryValue != null) {
+        EntityMetadata targetMetadata = MetadataCache.getMetadata(targetClass);
+
+        // Eager load tất cả các mối quan hệ NGOẠI TRỪ mối quan hệ ngược lại
+        String[] relationsToLoad =
+            targetMetadata.getRelations().keySet().stream()
+                .filter(name -> !name.equals(this.excludedRelationName))
+                .toArray(String[]::new);
+
         target =
             VMCQueryBuilder.from(targetClass)
+                .with(relationsToLoad)
                 .where(queryColumn, VMCSqlOperator.EQUAL, queryValue)
                 .getFirst();
       }
     }
 
     if (target == null) {
-      if ("toString".equals(method.getName()))
+      if ("toString".equals(method.getName())) {
         return "LazyProxy<" + targetClass.getSimpleName() + ">[uninitialized]";
-      if ("equals".equals(method.getName()) && args != null && args.length == 1)
+      }
+      if ("equals".equals(method.getName()) && args != null && args.length == 1) {
         return obj == args[0];
-      if ("hashCode".equals(method.getName())) return System.identityHashCode(obj);
+      }
+      if ("hashCode".equals(method.getName())) {
+        return System.identityHashCode(obj);
+      }
       return null;
     }
 

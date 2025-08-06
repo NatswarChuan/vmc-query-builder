@@ -1,5 +1,8 @@
 package io.github.natswarchuan.vmc.core.mapping;
 
+import io.github.natswarchuan.vmc.core.annotation.*;
+import io.github.natswarchuan.vmc.core.entity.Model;
+import io.github.natswarchuan.vmc.core.exception.VMCException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
@@ -11,17 +14,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
 
-import io.github.natswarchuan.vmc.core.annotation.*;
-import io.github.natswarchuan.vmc.core.entity.Model;
-import io.github.natswarchuan.vmc.core.exception.VMCException;
-
 /**
  * Một bộ đệm (cache) để lưu trữ siêu dữ liệu (metadata) của các thực thể.
  *
  * <p>Lớp này chịu trách nhiệm phân tích các annotation trên các lớp thực thể, tạo ra đối tượng
  * {@link EntityMetadata} và lưu trữ chúng vào cache để tăng hiệu năng. Việc này giúp tránh phải
  * phân tích lại các annotation mỗi khi có yêu cầu. Cache này là an toàn cho luồng (thread-safe).
- * 
+ *
  * @author NatswarChuan
  */
 public class MetadataCache {
@@ -80,7 +79,6 @@ public class MetadataCache {
                 VMCJoinColumn joinColumnAnn = field.getAnnotation(VMCJoinColumn.class);
                 String joinColumnName = (joinColumnAnn != null) ? joinColumnAnn.name() : null;
                 boolean isNullable = (joinColumnAnn != null) ? joinColumnAnn.nullable() : true;
-                boolean orphanRemoval = field.isAnnotationPresent(VMCOrphanRemoval.class);
 
                 if (field.isAnnotationPresent(VMCOneToOne.class)) {
                   VMCOneToOne ann = field.getAnnotation(VMCOneToOne.class);
@@ -93,7 +91,6 @@ public class MetadataCache {
                           .mappedBy(ann.mappedBy())
                           .joinColumnName(joinColumnName)
                           .foreignKeyNullable(isNullable)
-                          .orphanRemoval(orphanRemoval)
                           .build());
                 } else if (field.isAnnotationPresent(VMCOneToMany.class)) {
                   VMCOneToMany ann = field.getAnnotation(VMCOneToMany.class);
@@ -104,7 +101,6 @@ public class MetadataCache {
                           .type(RelationMetadata.RelationType.ONE_TO_MANY)
                           .targetEntity(getGenericType(field))
                           .mappedBy(ann.mappedBy())
-                          .orphanRemoval(orphanRemoval)
                           .build());
                 } else if (field.isAnnotationPresent(VMCManyToOne.class)) {
                   relations.put(

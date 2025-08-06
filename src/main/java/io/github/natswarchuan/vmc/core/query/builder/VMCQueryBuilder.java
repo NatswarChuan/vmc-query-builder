@@ -60,6 +60,7 @@ public class VMCQueryBuilder {
     VMCQueryBuilder.persistenceManager = injectedPersistenceManager;
   }
 
+  private boolean disableRecursion = false;
   private Class<? extends Model> modelClass;
   private String fromAlias;
   private final List<String> selectColumns = new ArrayList<>();
@@ -83,6 +84,16 @@ public class VMCQueryBuilder {
   private VMCQueryBuilder(Class<? extends Model> modelClass, String alias) {
     this.modelClass = modelClass;
     this.fromAlias = alias;
+  }
+
+  /**
+   * Vô hiệu hóa logic truy vấn đệ quy cho instance builder này.
+   *
+   * @return Chính instance builder này để gọi chuỗi.
+   */
+  public VMCQueryBuilder disableRecursion() {
+    this.disableRecursion = true;
+    return this;
   }
 
   /**
@@ -284,9 +295,11 @@ public class VMCQueryBuilder {
    * @return Một danh sách các thực thể.
    */
   public <T extends Model> List<T> get() {
-    RelationMetadata recursiveChildRel = findRecursiveChildRelation();
-    if (recursiveChildRel != null) {
-      return getRecursive(recursiveChildRel);
+    if (!this.disableRecursion) {
+      RelationMetadata recursiveChildRel = findRecursiveChildRelation();
+      if (recursiveChildRel != null) {
+        return getRecursive(recursiveChildRel);
+      }
     }
     return getInternal();
   }

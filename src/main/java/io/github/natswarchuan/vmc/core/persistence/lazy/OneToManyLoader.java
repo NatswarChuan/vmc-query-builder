@@ -1,14 +1,13 @@
 package io.github.natswarchuan.vmc.core.persistence.lazy;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
 import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
 import io.github.natswarchuan.vmc.core.mapping.RelationMetadata;
 import io.github.natswarchuan.vmc.core.query.builder.VMCQueryBuilder;
 import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Một triển khai của {@link LazyLoader} để tải dữ liệu cho mối quan hệ One-to-Many.
@@ -46,12 +45,15 @@ public class OneToManyLoader implements LazyLoader<Model> {
 
     RelationMetadata inverseRelation = targetMetadata.getRelations().get(relMeta.getMappedBy());
     String foreignKey = inverseRelation.getJoinColumnName();
-    String localKey = ownerMetadata.getPrimaryKeyColumnName();
-    Object ownerId = owner.getAttribute(localKey);
+    Object ownerId = owner.getAttribute(ownerMetadata.getPrimaryKeyColumnName());
 
-    if (ownerId == null) return Collections.emptyList();
+    if (ownerId == null) {
+      return Collections.emptyList();
+    }
 
-    return VMCQueryBuilder.from((Class<? extends Model>) relMeta.getTargetEntity())
+    Class<? extends Model> targetEntityClass = (Class<? extends Model>) relMeta.getTargetEntity();
+
+    return VMCQueryBuilder.from(targetEntityClass)
         .where(foreignKey, VMCSqlOperator.EQUAL, ownerId)
         .get();
   }

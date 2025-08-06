@@ -2,6 +2,7 @@ package io.github.natswarchuan.vmc.core.service;
 
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
 import java.util.List;
@@ -209,11 +210,23 @@ public interface VMCService<T extends Model, ID> {
   void deleteById(ID id);
 
   /**
-   * Xóa một thực thể đã cho.
+   * Xóa một thực thể bằng ID với các tùy chọn.
+   *
+   * @param id ID của thực thể cần xóa.
+   * @param options Các tùy chọn để kiểm soát hành vi xóa.
+   */
+  void deleteById(ID id, RemoveOptions options);
+
+  /** Xóa một thực thể đã cho. */
+  void delete(T entity);
+
+  /**
+   * Xóa một thực thể với các tùy chọn tùy chỉnh.
    *
    * @param entity Thực thể cần xóa.
+   * @param options Các tùy chọn để kiểm soát hành vi xóa.
    */
-  void delete(T entity);
+  void delete(T entity, RemoveOptions options);
 
   /**
    * Đếm tổng số thực thể.

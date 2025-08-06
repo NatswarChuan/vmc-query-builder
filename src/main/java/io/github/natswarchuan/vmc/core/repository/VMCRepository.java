@@ -1,12 +1,12 @@
 package io.github.natswarchuan.vmc.core.repository;
 
-import java.util.List;
-import java.util.Optional;
-
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Interface trung tâm cho các repository, cung cấp các chức năng CRUD (Tạo, Đọc, Cập nhật, Xóa)
@@ -143,6 +143,14 @@ public interface VMCRepository<T extends Model, ID> {
    * @param entity Thực thể cần xóa. Phải không được null.
    */
   void delete(T entity);
+
+  /**
+   * Xóa một thực thể với các tùy chọn tùy chỉnh.
+   *
+   * @param entity Thực thể cần xóa.
+   * @param options Các tùy chọn để kiểm soát hành vi xóa.
+   */
+  void delete(T entity, RemoveOptions options);
 
   /**
    * Trả về số lượng thực thể có sẵn.

@@ -290,7 +290,7 @@ public class ResultProcessor<T extends Model> {
     if (foreignKeyValue != null) {
       enhancer.setCallback(
           new LazyLoadInterceptor(
-              (Class<? extends Model>) relMeta.getTargetEntity(), targetColumn, foreignKeyValue));
+              (Class<? extends Model>) relMeta.getTargetEntity(), targetColumn, foreignKeyValue, relMeta.getFieldName()));
       return enhancer.create();
     }
     return null;

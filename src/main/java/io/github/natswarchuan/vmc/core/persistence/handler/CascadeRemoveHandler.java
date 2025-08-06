@@ -7,11 +7,13 @@ import io.github.natswarchuan.vmc.core.mapping.JoinTableMetadata;
 import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
 import io.github.natswarchuan.vmc.core.mapping.RelationMetadata;
 import io.github.natswarchuan.vmc.core.persistence.mapper.GenericQueryExecutorMapper;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.util.BeanUtil;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 
@@ -54,9 +56,15 @@ public class CascadeRemoveHandler {
    * @param model Thực thể sắp bị xóa.
    * @throws Exception nếu có lỗi xảy ra trong quá trình xử lý.
    */
-  public void handleCascades(Model model) throws Exception {
+  public void handleCascades(Model model, RemoveOptions options) throws Exception {
     EntityMetadata metadata = MetadataCache.getMetadata(getUnproxiedClass(model.getClass()));
-    for (RelationMetadata relMeta : metadata.getRelations().values()) {
+
+    Set<String> relationsToCascade = options.getRelationsToCascade();
+
+    for (String relationName : relationsToCascade) {
+      RelationMetadata relMeta = metadata.getRelations().get(relationName);
+      if (relMeta == null) continue;
+
       switch (relMeta.getType()) {
         case ONE_TO_MANY:
           handleOneToManyOnRemove(model, relMeta, metadata);
@@ -95,31 +103,23 @@ public class CascadeRemoveHandler {
     String fkColumn = inverseRelMeta.getJoinColumnName();
     Object ownerId = getPrimaryKeyValue(owner, ownerMeta);
 
-    if (relMeta.isOrphanRemoval()) {
-      String selectChildrenSql =
-          String.format(
-              "SELECT %s FROM %s WHERE %s = #{params.ownerId}",
-              childMeta.getPrimaryKeyColumnName(), childMeta.getTableName(), fkColumn);
-      List<Map<String, Object>> children =
-          getQueryExecutor().execute(selectChildrenSql, Map.of("ownerId", ownerId));
+    String selectChildrenSql =
+        String.format(
+            "SELECT %s FROM %s WHERE %s = #{params.ownerId}",
+            childMeta.getPrimaryKeyColumnName(), childMeta.getTableName(), fkColumn);
+    List<Map<String, Object>> children =
+        getQueryExecutor().execute(selectChildrenSql, Map.of("ownerId", ownerId));
 
-      if (!children.isEmpty()) {
-        List<Object> childIds =
-            children.stream().map(c -> c.values().iterator().next()).collect(Collectors.toList());
-        String deleteChildrenSql =
-            String.format(
-                "DELETE FROM %s WHERE %s IN (%s)",
-                childMeta.getTableName(),
-                childMeta.getPrimaryKeyColumnName(),
-                childIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
-        getQueryExecutor().delete(deleteChildrenSql, Collections.emptyMap());
-      }
-    } else {
-      String updateSql =
+    if (!children.isEmpty()) {
+      List<Object> childIds =
+          children.stream().map(c -> c.values().iterator().next()).collect(Collectors.toList());
+      String deleteChildrenSql =
           String.format(
-              "UPDATE %s SET %s = NULL WHERE %s = #{params.ownerId}",
-              childMeta.getTableName(), fkColumn, fkColumn);
-      getQueryExecutor().update(updateSql, Map.of("ownerId", ownerId));
+              "DELETE FROM %s WHERE %s IN (%s)",
+              childMeta.getTableName(),
+              childMeta.getPrimaryKeyColumnName(),
+              childIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+      getQueryExecutor().delete(deleteChildrenSql, Collections.emptyMap());
     }
   }
 
@@ -138,18 +138,10 @@ public class CascadeRemoveHandler {
     String fkColumn = inverseRelMeta.getJoinColumnName();
     Object ownerId = getPrimaryKeyValue(owner, ownerMeta);
 
-    if (relMeta.isOrphanRemoval() || !inverseRelMeta.isForeignKeyNullable()) {
-      String deleteSql =
-          String.format(
-              "DELETE FROM %s WHERE %s = #{params.ownerId}", relatedMeta.getTableName(), fkColumn);
-      getQueryExecutor().delete(deleteSql, Map.of("ownerId", ownerId));
-    } else {
-      String updateSql =
-          String.format(
-              "UPDATE %s SET %s = NULL WHERE %s = #{params.ownerId}",
-              relatedMeta.getTableName(), fkColumn, fkColumn);
-      getQueryExecutor().update(updateSql, Map.of("ownerId", ownerId));
-    }
+    String deleteSql =
+        String.format(
+            "DELETE FROM %s WHERE %s = #{params.ownerId}", relatedMeta.getTableName(), fkColumn);
+    getQueryExecutor().delete(deleteSql, Map.of("ownerId", ownerId));
   }
 
   /**

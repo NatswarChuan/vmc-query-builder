@@ -1,13 +1,5 @@
 package io.github.natswarchuan.vmc.core.query.helper;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
 import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
@@ -16,9 +8,22 @@ import io.github.natswarchuan.vmc.core.query.clause.OrderByClause;
 import io.github.natswarchuan.vmc.core.query.clause.PreparedQuery;
 import io.github.natswarchuan.vmc.core.query.clause.WhereClause;
 import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Xây dựng các chuỗi câu lệnh SQL và các tham số tương ứng từ các thành phần truy vấn.
+ *
+ * <p>Lớp này đóng vai trò là một "thợ xây" cho các câu lệnh SQL, chuyển đổi các cấu hình trừu tượng
+ * (như danh sách cột, điều kiện WHERE, mệnh đề JOIN) từ một query builder thành một đối tượng
+ * {@link PreparedQuery} cụ thể, sẵn sàng để được thực thi bởi một trình thực thi truy vấn như
+ * MyBatis. Nó đảm bảo rằng các câu lệnh được tạo ra là hợp lệ về mặt cú pháp và các tham số được
+ * quản lý một cách an toàn để chống lại các cuộc tấn công SQL Injection.
  *
  * @author NatswarChuan
  */
@@ -34,6 +39,21 @@ public class SqlBuilder {
   private final Integer offset;
   private final List<JoinClause> joinClauses;
 
+  /**
+   * Khởi tạo một instance mới của SqlBuilder với tất cả các thành phần cần thiết.
+   *
+   * @param modelClass Lớp thực thể gốc của truy vấn (bảng FROM).
+   * @param fromAlias Bí danh sẽ được sử dụng cho bảng gốc.
+   * @param selectColumns Danh sách các cột sẽ được chọn trong mệnh đề SELECT.
+   * @param whereClauses Danh sách các điều kiện trong mệnh đề WHERE.
+   * @param orderByClauses Danh sách các quy tắc sắp xếp trong mệnh đề ORDER BY.
+   * @param groupByColumns Danh sách các cột trong mệnh đề GROUP BY.
+   * @param limit Giá trị cho mệnh đề LIMIT (có thể là null).
+   * @param offset Giá trị cho mệnh đề OFFSET (có thể là null).
+   * @param joinClauses Danh sách các mệnh đề JOIN.
+   * @param withRelations Danh sách tên các mối quan hệ cần tải ngay (không được sử dụng trực tiếp
+   *     trong lớp này nhưng là một phần của trạng thái builder).
+   */
   public SqlBuilder(
       Class<? extends Model> modelClass,
       String fromAlias,
@@ -56,6 +76,15 @@ public class SqlBuilder {
     this.joinClauses = joinClauses;
   }
 
+  /**
+   * Xây dựng câu lệnh SQL SELECT hoàn chỉnh.
+   *
+   * <p>Phương thức này tổng hợp tất cả các thành phần đã được cấu hình (select, from, join, where,
+   * group by, order by, limit, offset) để tạo ra một câu lệnh SELECT cuối cùng. Nếu không có cột
+   * nào được chỉ định, nó sẽ tự động thêm các cột mặc định.
+   *
+   * @return Một đối tượng {@link PreparedQuery} chứa chuỗi SQL và các tham số.
+   */
   public PreparedQuery build() {
     EntityMetadata mainMetadata = MetadataCache.getMetadata(this.modelClass);
     if (this.selectColumns.isEmpty()) {
@@ -74,6 +103,15 @@ public class SqlBuilder {
     return new PreparedQuery(sql.toString(), params);
   }
 
+  /**
+   * Xây dựng câu lệnh SQL để đếm số lượng bản ghi.
+   *
+   * <p>Phương thức này tạo một câu lệnh {@code COUNT}. Nếu có mệnh đề {@code GROUP BY}, nó sẽ sử
+   * dụng một subquery để đếm đúng số lượng nhóm. Nếu không, nó sẽ sử dụng {@code COUNT(DISTINCT
+   * primary_key)} để đảm bảo kết quả chính xác khi có các mệnh đề JOIN.
+   *
+   * @return Một đối tượng {@link PreparedQuery} chứa chuỗi SQL và các tham số.
+   */
   public PreparedQuery buildCountQuery() {
     EntityMetadata mainMetadata = MetadataCache.getMetadata(this.modelClass);
     StringBuilder baseQuery = new StringBuilder();
@@ -103,8 +141,15 @@ public class SqlBuilder {
     }
   }
 
+  /**
+   * Thêm các cột select mặc định nếu người dùng không chỉ định.
+   *
+   * <p>Mặc định sẽ là {@code SELECT alias.column1 as alias_column1, ...} cho thực thể chính và tất
+   * cả các thực thể được join.
+   *
+   * @param mainMetadata Metadata của thực thể chính.
+   */
   private void addDefaultSelects(EntityMetadata mainMetadata) {
-
     addColumnsForEntity(mainMetadata, fromAlias);
 
     for (JoinClause join : joinClauses) {
@@ -116,11 +161,15 @@ public class SqlBuilder {
   }
 
   /**
-   * Thêm tất cả các cột cần thiết cho một entity vào danh sách SELECT. Bao gồm các cột dữ liệu
-   * (@VMCColumn) và các cột khóa ngoại (@VMCJoinColumn).
+   * Thêm tất cả các cột cần thiết cho một entity vào danh sách SELECT.
+   *
+   * <p>Bao gồm các cột dữ liệu (`@VMCColumn`) và các cột khóa ngoại (`@VMCJoinColumn`). Các cột
+   * được đặt bí danh theo mẫu {@code alias_columnName} để tránh xung đột tên.
+   *
+   * @param metadata Metadata của thực thể cần thêm cột.
+   * @param alias Bí danh của bảng tương ứng.
    */
   private void addColumnsForEntity(EntityMetadata metadata, String alias) {
-
     metadata
         .getFieldToColumnMap()
         .values()
@@ -149,6 +198,11 @@ public class SqlBuilder {
             });
   }
 
+  /**
+   * Nối các mệnh đề JOIN vào câu lệnh SQL.
+   *
+   * @param sql StringBuilder chứa câu lệnh SQL đang được xây dựng.
+   */
   private void appendJoins(StringBuilder sql) {
     for (JoinClause join : this.joinClauses) {
       sql.append(" ")
@@ -166,6 +220,13 @@ public class SqlBuilder {
     }
   }
 
+  /**
+   * Xây dựng và nối mệnh đề WHERE vào câu lệnh SQL, đồng thời tạo ra map các tham số.
+   *
+   * @param sql StringBuilder chứa câu lệnh SQL đang được xây dựng.
+   * @param alias Bí danh của bảng chính, được sử dụng cho các cột không có bí danh rõ ràng.
+   * @return Một {@code Map} chứa các tham số cho mệnh đề WHERE.
+   */
   public Map<String, Object> buildWhereClause(StringBuilder sql, String alias) {
     Map<String, Object> params = new HashMap<>();
     if (!whereClauses.isEmpty()) {
@@ -184,7 +245,7 @@ public class SqlBuilder {
         if (clause.getOperator() == VMCSqlOperator.IN && clause.getValue() instanceof Collection) {
           Collection<?> values = (Collection<?>) clause.getValue();
           if (values.isEmpty()) {
-            sql.append("1 = 0");
+            sql.append("1 = 0"); // Điều kiện luôn sai nếu collection IN rỗng
           } else {
             String placeholders =
                 values.stream()
@@ -212,6 +273,11 @@ public class SqlBuilder {
     return params;
   }
 
+  /**
+   * Nối mệnh đề GROUP BY vào câu lệnh SQL.
+   *
+   * @param sql StringBuilder chứa câu lệnh SQL đang được xây dựng.
+   */
   private void appendGroupBy(StringBuilder sql) {
     if (!groupByColumns.isEmpty()) {
       sql.append(" GROUP BY ")
@@ -222,6 +288,11 @@ public class SqlBuilder {
     }
   }
 
+  /**
+   * Nối mệnh đề ORDER BY vào câu lệnh SQL.
+   *
+   * @param sql StringBuilder chứa câu lệnh SQL đang được xây dựng.
+   */
   private void appendOrderBy(StringBuilder sql) {
     if (!orderByClauses.isEmpty()) {
       sql.append(" ORDER BY ");
@@ -251,6 +322,11 @@ public class SqlBuilder {
     }
   }
 
+  /**
+   * Nối các mệnh đề LIMIT và OFFSET vào câu lệnh SQL.
+   *
+   * @param sql StringBuilder chứa câu lệnh SQL đang được xây dựng.
+   */
   private void appendLimitOffset(StringBuilder sql) {
     if (this.limit != null) {
       sql.append(" LIMIT ").append(this.limit);

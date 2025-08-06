@@ -3,6 +3,7 @@ package io.github.natswarchuan.vmc.core.service;
 import io.github.natswarchuan.vmc.core.dto.BaseDto;
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.exception.VMCException;
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.query.builder.Paginator;
 import io.github.natswarchuan.vmc.core.repository.VMCRepository;
@@ -164,16 +165,26 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
 
   @Override
   public void deleteById(ID id) {
+    deleteById(id, RemoveOptions.defaults());
+  }
+
+  @Override
+  public void deleteById(ID id, RemoveOptions options) {
     T entity =
         this.findById(id)
             .orElseThrow(
                 () -> new VMCException(HttpStatus.NOT_FOUND, "Entity not found with id: " + id));
-    repository.delete(entity);
+    repository.delete(entity, options);
   }
 
   @Override
   public void delete(T entity) {
     repository.delete(entity);
+  }
+
+  @Override
+  public void delete(T entity, RemoveOptions options) {
+    repository.delete(entity, options);
   }
 
   @Override
@@ -216,7 +227,7 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
     }
     T entityFromDto = requestDto.toEntity();
     entityFromDto.setPrimaryKey(id);
-    T updatedEntity = this.save(entityFromDto, options);
+    T updatedEntity = this.update(id,entityFromDto, options);
     try {
       O responseDto = responseDtoClass.getDeclaredConstructor().newInstance();
       return responseDto.toDto(updatedEntity);
