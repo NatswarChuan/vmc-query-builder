@@ -33,6 +33,11 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
 
   protected final R repository;
 
+  /**
+   * Khởi tạo một service mới với một repository cụ thể.
+   *
+   * @param repository Repository sẽ được sử dụng cho các thao tác truy cập dữ liệu.
+   */
   protected AbstractVMCService(R repository) {
     this.repository = repository;
   }
@@ -175,8 +180,6 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
   public long count() {
     return repository.count();
   }
-
-  // --- TRIỂN KHAI CÁC PHƯƠNG THỨC MỚI (ĐÃ SỬA LỖI TYPE SAFETY) ---
 
   @Override
   public <I extends BaseDto<T, I>, O extends BaseDto<T, O>> O createFromDto(

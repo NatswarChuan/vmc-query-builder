@@ -222,8 +222,6 @@ public interface VMCService<T extends Model, ID> {
    */
   long count();
 
-  // --- CÁC PHƯƠNG THỨC MỚI ĐƯỢC THÊM (ĐÃ SỬA LỖI TYPE CLASH) ---
-
   /**
    * Tạo một thực thể mới từ một DTO và trả về một DTO khác.
    *

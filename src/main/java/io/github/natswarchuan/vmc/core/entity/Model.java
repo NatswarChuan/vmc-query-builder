@@ -2,6 +2,7 @@ package io.github.natswarchuan.vmc.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.github.natswarchuan.vmc.core.exception.VMCException;
 import io.github.natswarchuan.vmc.core.mapping.EntityMetadata;
 import io.github.natswarchuan.vmc.core.mapping.MetadataCache;
 import io.github.natswarchuan.vmc.core.persistence.VMCPersistenceManager;
@@ -12,31 +13,49 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
 
-
+/**
+ * Lớp trừu tượng cơ sở cho tất cả các thực thể (entity) trong framework.
+ *
+ * <p>Lớp này cung cấp một cơ chế lưu trữ thuộc tính linh hoạt thông qua một {@code Map} và các
+ * phương thức tiện ích để tương tác với tầng persistence. Mọi lớp entity muốn được quản lý bởi
+ * framework này đều phải kế thừa từ {@code Model}.
+ *
+ * @author NatswarChuan
+ */
 public abstract class Model {
 
-  @JsonIgnore
-  protected Map<String, Object> attributes = new HashMap<>();
-
-  @JsonIgnore
-  private transient Object primaryKey;
+  /**
+   * Một {@code Map} để lưu trữ dữ liệu thô của thực thể, thường là ánh xạ từ tên cột trong cơ sở dữ
+   * liệu sang giá trị. Thuộc tính này được ẩn khỏi quá trình serialization JSON.
+   */
+  @JsonIgnore protected Map<String, Object> attributes = new HashMap<>();
 
   /**
-   * Gán trực tiếp một Map các thuộc tính cho đối tượng, đồng thời điền dữ liệu
-   * vào các trường (field) tương ứng của lớp con.
-   * Phương thức này thay thế map hiện tại.
+   * Lưu trữ giá trị của khóa chính để truy cập nhanh. Được đánh dấu là {@code transient} để không
+   * được serialize và {@code JsonIgnore} để Jackson bỏ qua.
+   */
+  @JsonIgnore private transient Object primaryKey;
+
+  /**
+   * Gán một {@code Map} các thuộc tính cho thực thể.
+   *
+   * <p>Phương thức này không chỉ thay thế map thuộc tính hiện tại mà còn tự động điền dữ liệu vào
+   * các trường (field) tương ứng của lớp con bằng cách sử dụng reflection và metadata. Điều này cho
+   * phép ánh xạ dữ liệu từ kết quả truy vấn cơ sở dữ liệu vào đối tượng một cách linh hoạt.
+   *
+   * @param attributes Một {@code Map} chứa dữ liệu, với key là tên cột và value là giá trị tương
+   *     ứng.
    */
   public void setAttributes(Map<String, Object> attributes) {
     this.attributes = attributes;
 
-    // Lấy metadata để biết cách ánh xạ từ tên cột sang tên trường
     EntityMetadata metadata = MetadataCache.getMetadata(this.getClass());
     Map<String, String> columnToFieldMap =
         metadata.getFieldToColumnMap().entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
 
-    // Duyệt qua dữ liệu và gán vào các trường tương ứng
     for (Map.Entry<String, Object> entry : attributes.entrySet()) {
       String columnName = entry.getKey();
       String fieldName = columnToFieldMap.get(columnName);
@@ -45,32 +64,43 @@ public abstract class Model {
         try {
           Field field = findField(this.getClass(), fieldName);
           field.setAccessible(true);
-          // Chuyển đổi kiểu dữ liệu nếu cần (ví dụ: Timestamp -> LocalDateTime)
+
           Object convertedValue = DataConverter.convertValue(entry.getValue(), field.getType());
           field.set(this, convertedValue);
         } catch (Exception e) {
-          // Bỏ qua lỗi nếu không thể set field, dữ liệu vẫn còn trong map
+
         }
       }
     }
   }
 
   /**
-   * Lấy giá trị của một thuộc tính cụ thể.
+   * Lấy giá trị của một thuộc tính cụ thể từ map {@code attributes}.
+   *
+   * @param key Tên của thuộc tính (thường là tên cột trong cơ sở dữ liệu).
+   * @return Giá trị của thuộc tính, hoặc {@code null} nếu không tồn tại.
    */
   public Object getAttribute(String key) {
     return this.attributes.get(key);
   }
 
   /**
-   * Gán giá trị cho một thuộc tính cụ thể.
+   * Gán giá trị cho một thuộc tính cụ thể trong map {@code attributes}.
+   *
+   * @param key Tên của thuộc tính.
+   * @param value Giá trị cần gán.
    */
   public void setAttribute(String key, Object value) {
     attributes.put(key, value);
   }
 
   /**
-   * Trả về toàn bộ map các thuộc tính, hữu ích cho việc serialization JSON.
+   * Trả về toàn bộ map các thuộc tính.
+   *
+   * <p>Phương thức này được chú thích bằng {@code @JsonAnyGetter}, cho phép Jackson serialize tất
+   * cả các entry trong map này thành các thuộc tính JSON cấp cao nhất.
+   *
+   * @return Toàn bộ map các thuộc tính của thực thể.
    */
   @JsonAnyGetter
   public Map<String, Object> getAttributes() {
@@ -79,7 +109,11 @@ public abstract class Model {
 
   /**
    * Lấy giá trị của khóa chính một cách tiện lợi.
-   * @return Giá trị của khóa chính.
+   *
+   * <p>Phương thức này sẽ ưu tiên trả về giá trị đã được cache. Nếu chưa có, nó sẽ truy vấn
+   * metadata để tìm tên cột khóa chính và lấy giá trị từ map {@code attributes}.
+   *
+   * @return Giá trị của khóa chính, hoặc {@code null} nếu không tìm thấy.
    */
   @JsonIgnore
   public Object getPrimaryKey() {
@@ -95,6 +129,10 @@ public abstract class Model {
 
   /**
    * Thiết lập giá trị cho khóa chính.
+   *
+   * <p>Phương thức này cập nhật cả biến cache {@code primaryKey} và giá trị tương ứng trong map
+   * {@code attributes}.
+   *
    * @param pkValue Giá trị khóa chính cần gán.
    */
   public void setPrimaryKey(Object pkValue) {
@@ -106,9 +144,14 @@ public abstract class Model {
   }
 
   /**
-   * Tìm một trường trong một lớp hoặc các lớp cha của nó.
+   * Tìm một trường (field) trong một lớp hoặc các lớp cha của nó bằng reflection.
+   *
+   * @param clazz Lớp bắt đầu tìm kiếm.
+   * @param fieldName Tên của trường cần tìm.
+   * @return Đối tượng {@code Field} nếu tìm thấy.
+   * @throws VMCException nếu không tìm thấy trường trong toàn bộ hệ thống phân cấp lớp.
    */
-  private Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+  private Field findField(Class<?> clazz, String fieldName) {
     Class<?> current = clazz;
     while (current != null && !current.equals(Object.class)) {
       try {
@@ -117,22 +160,21 @@ public abstract class Model {
         current = current.getSuperclass();
       }
     }
-    throw new NoSuchFieldException(
+    throw new VMCException(
+        HttpStatus.INTERNAL_SERVER_ERROR,
         "Field '" + fieldName + "' not found in class " + clazz.getName());
   }
 
-  // --- CÁC HÀM HỖ TRỢ TIỆN ÍCH ---
-
-  /**
-   * Lưu thực thể hiện tại vào cơ sở dữ liệu.
-   */
+  /** Lưu thực thể hiện tại vào cơ sở dữ liệu bằng cách sử dụng các tùy chọn mặc định. */
   public void save() {
     VMCPersistenceManager manager = BeanUtil.getBean(VMCPersistenceManager.class);
     manager.save(this, new SaveOptions());
   }
 
   /**
-   * Lưu thực thể hiện tại với các tùy chọn tùy chỉnh (ví dụ: cascade).
+   * Lưu thực thể hiện tại vào cơ sở dữ liệu với các tùy chọn tùy chỉnh.
+   *
+   * @param options Các tùy chọn để kiểm soát hành vi lưu, ví dụ như cascade.
    */
   public void save(SaveOptions options) {
     VMCPersistenceManager manager = BeanUtil.getBean(VMCPersistenceManager.class);
@@ -140,7 +182,10 @@ public abstract class Model {
   }
 
   /**
-   * Lưu một tập hợp các thực thể.
+   * Lưu một tập hợp các thực thể vào cơ sở dữ liệu.
+   *
+   * @param <T> Kiểu của các thực thể, phải kế thừa từ {@code Model}.
+   * @param models Một {@code Iterable} chứa các thực thể cần lưu.
    */
   public static <T extends Model> void saveAll(Iterable<T> models) {
     VMCPersistenceManager manager = BeanUtil.getBean(VMCPersistenceManager.class);
@@ -149,15 +194,17 @@ public abstract class Model {
 
   /**
    * Lưu một tập hợp các thực thể với các tùy chọn tùy chỉnh.
+   *
+   * @param <T> Kiểu của các thực thể.
+   * @param models Một {@code Iterable} chứa các thực thể cần lưu.
+   * @param options Các tùy chọn để kiểm soát hành vi lưu.
    */
   public static <T extends Model> void saveAll(Iterable<T> models, SaveOptions options) {
     VMCPersistenceManager manager = BeanUtil.getBean(VMCPersistenceManager.class);
     manager.saveAll(models, options);
   }
 
-  /**
-   * Xóa thực thể hiện tại khỏi cơ sở dữ liệu.
-   */
+  /** Xóa thực thể hiện tại khỏi cơ sở dữ liệu. */
   public void remove() {
     VMCPersistenceManager manager = BeanUtil.getBean(VMCPersistenceManager.class);
     manager.remove(this);

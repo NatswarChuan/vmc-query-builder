@@ -34,10 +34,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- Thêm CSS cho highlight.js theme VS2015 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
-  
+
   <link rel="stylesheet" href="./style.css">
 
   <meta name="google-site-verification" content="IH1UdXKkUiyutr8P71xXOOkarqqdLye0EATRqOqKBE8" />
@@ -349,21 +349,29 @@ private Set&lt;User&gt; users;
           <article id="lazy-loading" class="scroll-mt-20 pt-4">
             <h3 class="text-2xl font-semibold text-slate-800">4.4. Lazy Loading, Cascade và Orphan Removal</h3>
             <div class="space-y-4">
-                <div>
-                    <h4 class="text-xl font-semibold text-slate-700">Lazy Loading (Tải lười)</h4>
-                    <p class="mt-2 text-slate-600">Đây là hành vi mặc định cho các mối quan hệ tập hợp (<code>One-to-Many</code>, <code>Many-to-Many</code>) để tối ưu hiệu suất. Thay vì tải tất cả các thực thể liên quan cùng một lúc, framework sẽ chỉ thực hiện truy vấn để lấy dữ liệu của collection khi bạn truy cập vào nó lần đầu tiên (ví dụ: gọi <code>user.getPosts()</code>). Điều này giúp tránh các truy vấn JOIN không cần thiết và cải thiện thời gian phản hồi ban đầu.</p>
-                </div>
-                <div>
-                    <h4 class="text-xl font-semibold text-slate-700">Cascade Save (Lưu theo tầng)</h4>
-                    <p class="mt-2 text-slate-600">Tính năng này cho phép bạn lưu một thực thể cha và tự động lưu tất cả các thực thể con liên quan trong cùng một thao tác. <strong>Quan trọng:</strong> Tính năng này không được bật mặc định. Để kích hoạt, bạn phải:</p>
-                    <ol class="list-decimal list-inside mt-2 space-y-1 text-slate-600">
-                        <li>Tạo một đối tượng <code>SaveOptions</code>.</li>
-                        <li>Sử dụng phương thức <code>.with("ten_quan_he")</code> để chỉ định chính xác những mối quan hệ nào bạn muốn lưu theo tầng.</li>
-                        <li>Truyền đối tượng <code>SaveOptions</code> này vào phương thức <code>save()</code> hoặc các phương thức <code>...FromDto()</code> trong lớp Service của bạn.</li>
-                    </ol>
-                    <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
-                        <button class="copy-btn">Copy</button>
-                        <pre><code class="language-java">// Ví dụ trong UserService
+              <div>
+                <h4 class="text-xl font-semibold text-slate-700">Lazy Loading (Tải lười)</h4>
+                <p class="mt-2 text-slate-600">Đây là hành vi mặc định cho các mối quan hệ tập hợp
+                  (<code>One-to-Many</code>, <code>Many-to-Many</code>) để tối ưu hiệu suất. Thay vì tải tất cả các thực
+                  thể liên quan cùng một lúc, framework sẽ chỉ thực hiện truy vấn để lấy dữ liệu của collection khi bạn
+                  truy cập vào nó lần đầu tiên (ví dụ: gọi <code>user.getPosts()</code>). Điều này giúp tránh các truy
+                  vấn JOIN không cần thiết và cải thiện thời gian phản hồi ban đầu.</p>
+              </div>
+              <div>
+                <h4 class="text-xl font-semibold text-slate-700">Cascade Save (Lưu theo tầng)</h4>
+                <p class="mt-2 text-slate-600">Tính năng này cho phép bạn lưu một thực thể cha và tự động lưu tất cả các
+                  thực thể con liên quan trong cùng một thao tác. <strong>Quan trọng:</strong> Tính năng này không được
+                  bật mặc định. Để kích hoạt, bạn phải:</p>
+                <ol class="list-decimal list-inside mt-2 space-y-1 text-slate-600">
+                  <li>Tạo một đối tượng <code>SaveOptions</code>.</li>
+                  <li>Sử dụng phương thức <code>.with("ten_quan_he")</code> để chỉ định chính xác những mối quan hệ nào
+                    bạn muốn lưu theo tầng.</li>
+                  <li>Truyền đối tượng <code>SaveOptions</code> này vào phương thức <code>save()</code> hoặc các phương
+                    thức <code>...FromDto()</code> trong lớp Service của bạn.</li>
+                </ol>
+                <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
+                  <button class="copy-btn">Copy</button>
+                  <pre><code class="language-java">// Ví dụ trong UserService
 public User createUserAndProfile(UserCreateDto dto) {
     User user = dto.toEntity(); // user có chứa một đối tượng UserProfile mới
     
@@ -374,14 +382,17 @@ public User createUserAndProfile(UserCreateDto dto) {
     return this.save(user, options); 
 }
 </code></pre>
-                    </div>
                 </div>
-                <div>
-                    <h4 class="text-xl font-semibold text-slate-700">Orphan Removal</h4>
-                    <p class="mt-2 text-slate-600">Khi bạn xóa một thực thể con khỏi collection của thực thể cha, thực thể con đó trở thành "mồ côi". Bằng cách thêm annotation <code>@VMCOrphanRemoval</code> vào mối quan hệ (trên các quan hệ <code>One-to-One</code> và <code>One-to-Many</code>), bạn chỉ thị cho framework tự động xóa các thực thể "mồ côi" này khỏi cơ sở dữ liệu khi bạn lưu thực thể cha.</p>
-                    <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
-                        <button class="copy-btn">Copy</button>
-                        <pre><code class="language-java">// Trong User.java
+              </div>
+              <div>
+                <h4 class="text-xl font-semibold text-slate-700">Orphan Removal</h4>
+                <p class="mt-2 text-slate-600">Khi bạn xóa một thực thể con khỏi collection của thực thể cha, thực thể
+                  con đó trở thành "mồ côi". Bằng cách thêm annotation <code>@VMCOrphanRemoval</code> vào mối quan hệ
+                  (trên các quan hệ <code>One-to-One</code> và <code>One-to-Many</code>), bạn chỉ thị cho framework tự
+                  động xóa các thực thể "mồ côi" này khỏi cơ sở dữ liệu khi bạn lưu thực thể cha.</p>
+                <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
+                  <button class="copy-btn">Copy</button>
+                  <pre><code class="language-java">// Trong User.java
 @VMCOneToMany(mappedBy = "user")
 @VMCOrphanRemoval // Kích hoạt tính năng
 private List&lt;Post&gt; posts;
@@ -395,8 +406,8 @@ public void removeFirstPost(String userId) {
     }
 }
 </code></pre>
-                    </div>
                 </div>
+              </div>
             </div>
           </article>
         </section>
@@ -425,64 +436,75 @@ public interface UserRepository extends VMCRepository&lt;User, String&gt; {
 
         <section id="phuong-thuc-truy-van" class="mb-12 space-y-4 scroll-mt-20">
           <h2 class="text-3xl font-bold text-slate-900 border-b pb-2">6. Các phương thức truy vấn</h2>
-          <p>Framework cung cấp hai cách chính để định nghĩa các truy vấn trong interface Repository của bạn: <strong>Truy vấn phát (Derived Queries)</strong> và <strong>Truy vấn tùy chỉnh (Custom Queries)</strong>.</p>
-        
+          <p>Framework cung cấp hai cách chính để định nghĩa các truy vấn trong interface Repository của bạn:
+            <strong>Truy vấn phát (Derived Queries)</strong> và <strong>Truy vấn tùy chỉnh (Custom Queries)</strong>.
+          </p>
+
           <article id="derived-queries" class="scroll-mt-20 pt-4">
             <h3 class="text-2xl font-semibold text-slate-800">6.1. Truy vấn phát sinh (Derived Query Methods)</h3>
-            <p>Đây là cách mạnh mẽ nhất để tạo truy vấn mà không cần viết một dòng SQL nào. Framework sẽ tự động phân tích tên phương thức của bạn và tạo ra câu lệnh SQL tương ứng. Cấu trúc của tên phương thức tuân theo mẫu sau:</p>
-            <p class="font-mono bg-slate-100 p-2 rounded-md text-sm mt-2"><code>(action)(Dto)?(quantifier)By(criteria)(OrderBy...)</code></p>
-            
+            <p>Đây là cách mạnh mẽ nhất để tạo truy vấn mà không cần viết một dòng SQL nào. Framework sẽ tự động phân
+              tích tên phương thức của bạn và tạo ra câu lệnh SQL tương ứng. Cấu trúc của tên phương thức tuân theo mẫu
+              sau:</p>
+            <p class="font-mono bg-slate-100 p-2 rounded-md text-sm mt-2">
+              <code>(action)(Dto)?(quantifier)By(criteria)(OrderBy...)</code></p>
+
             <div class="mt-4 space-y-2">
-                <p><strong>Action:</strong> Tiền tố bắt buộc, xác định hành động của truy vấn. Bao gồm: <code>find</code>, <code>get</code>, <code>count</code>, <code>delete</code>, <code>remove</code>.</p>
-                <p><strong>Dto (Tùy chọn):</strong> Nếu có từ khóa `Dto`, phương thức sẽ tự động trả về đối tượng DTO thay vì Entity.</p>
-                <p><strong>Quantifier (Tùy chọn):</strong> Giới hạn kết quả trả về. Bao gồm: <code>All</code> (mặc định nếu trả về List), <code>First</code> (trả về một đối tượng duy nhất).</p>
-                <p><strong>Criteria:</strong> Phần quan trọng nhất, bắt đầu bằng từ khóa <code>By</code>. Bạn định nghĩa các điều kiện `WHERE` bằng cách kết hợp tên thuộc tính của Entity với các toán tử được hỗ trợ. Các điều kiện có thể được nối với nhau bằng <code>And</code> hoặc <code>Or</code>.</p>
-                <p><strong>OrderBy (Tùy chọn):</strong> Sắp xếp kết quả. Cú pháp: <code>OrderBy&lt;PropertyName&gt;Asc|Desc</code>.</p>
+              <p><strong>Action:</strong> Tiền tố bắt buộc, xác định hành động của truy vấn. Bao gồm: <code>find</code>,
+                <code>get</code>, <code>count</code>, <code>delete</code>, <code>remove</code>.</p>
+              <p><strong>Dto (Tùy chọn):</strong> Nếu có từ khóa `Dto`, phương thức sẽ tự động trả về đối tượng DTO thay
+                vì Entity.</p>
+              <p><strong>Quantifier (Tùy chọn):</strong> Giới hạn kết quả trả về. Bao gồm: <code>All</code> (mặc định
+                nếu trả về List), <code>First</code> (trả về một đối tượng duy nhất).</p>
+              <p><strong>Criteria:</strong> Phần quan trọng nhất, bắt đầu bằng từ khóa <code>By</code>. Bạn định nghĩa
+                các điều kiện `WHERE` bằng cách kết hợp tên thuộc tính của Entity với các toán tử được hỗ trợ. Các điều
+                kiện có thể được nối với nhau bằng <code>And</code> hoặc <code>Or</code>.</p>
+              <p><strong>OrderBy (Tùy chọn):</strong> Sắp xếp kết quả. Cú pháp:
+                <code>OrderBy&lt;PropertyName&gt;Asc|Desc</code>.</p>
             </div>
-        
+
             <h4 class="text-xl font-semibold text-slate-700 mt-4">Các toán tử điều kiện được hỗ trợ</h4>
             <table class="w-full mt-2 border-collapse text-left">
-                <thead class="bg-slate-100">
-                    <tr>
-                        <th class="p-2 border">Từ khóa</th>
-                        <th class="p-2 border">Ví dụ</th>
-                        <th class="p-2 border">SQL tương đương</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">Like, Containing</td>
-                        <td class="p-2 border font-mono">findByNameContaining(String name)</td>
-                        <td class="p-2 border font-mono">WHERE name LIKE ?</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">In</td>
-                        <td class="p-2 border font-mono">findByStatusIn(Collection&lt;String&gt; statuses)</td>
-                        <td class="p-2 border font-mono">WHERE status IN (...)</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">Between</td>
-                        <td class="p-2 border font-mono">findByAgeBetween(int start, int end)</td>
-                        <td class="p-2 border font-mono">WHERE age BETWEEN ? AND ?</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">GreaterThan, LessThan, ...Equal</td>
-                        <td class="p-2 border font-mono">findByStartDateGreaterThanEqual(Date date)</td>
-                        <td class="p-2 border font-mono">WHERE start_date >= ?</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">IsNull, IsNotNull</td>
-                        <td class="p-2 border font-mono">findByEndDateIsNull()</td>
-                        <td class="p-2 border font-mono">WHERE end_date IS NULL</td>
-                    </tr>
-                    <tr class="border-b">
-                        <td class="p-2 border font-mono">True, False</td>
-                        <td class="p-2 border font-mono">findByIsActiveTrue()</td>
-                        <td class="p-2 border font-mono">WHERE is_active = true</td>
-                    </tr>
-                </tbody>
+              <thead class="bg-slate-100">
+                <tr>
+                  <th class="p-2 border">Từ khóa</th>
+                  <th class="p-2 border">Ví dụ</th>
+                  <th class="p-2 border">SQL tương đương</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">Like, Containing</td>
+                  <td class="p-2 border font-mono">findByNameContaining(String name)</td>
+                  <td class="p-2 border font-mono">WHERE name LIKE ?</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">In</td>
+                  <td class="p-2 border font-mono">findByStatusIn(Collection&lt;String&gt; statuses)</td>
+                  <td class="p-2 border font-mono">WHERE status IN (...)</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">Between</td>
+                  <td class="p-2 border font-mono">findByAgeBetween(int start, int end)</td>
+                  <td class="p-2 border font-mono">WHERE age BETWEEN ? AND ?</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">GreaterThan, LessThan, ...Equal</td>
+                  <td class="p-2 border font-mono">findByStartDateGreaterThanEqual(Date date)</td>
+                  <td class="p-2 border font-mono">WHERE start_date >= ?</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">IsNull, IsNotNull</td>
+                  <td class="p-2 border font-mono">findByEndDateIsNull()</td>
+                  <td class="p-2 border font-mono">WHERE end_date IS NULL</td>
+                </tr>
+                <tr class="border-b">
+                  <td class="p-2 border font-mono">True, False</td>
+                  <td class="p-2 border font-mono">findByIsActiveTrue()</td>
+                  <td class="p-2 border font-mono">WHERE is_active = true</td>
+                </tr>
+              </tbody>
             </table>
-        
+
             <h4 class="text-xl font-semibold text-slate-700 mt-4">Ví dụ thực tế</h4>
             <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
               <button class="copy-btn">Copy</button>
@@ -510,10 +532,12 @@ Optional&lt;UserDto&gt; findDtoByEmail(String email);
 </code></pre>
             </div>
           </article>
-        
+
           <article id="vmc-query" class="scroll-mt-20 pt-4">
             <h3 class="text-2xl font-semibold text-slate-800">6.2. Truy vấn tùy chỉnh với @VMCQuery</h3>
-            <p>Đối với các truy vấn phức tạp không thể biểu diễn bằng tên phương thức, bạn có thể sử dụng <code>@VMCQuery</code> để viết câu lệnh SQL gốc. Các tham số của phương thức phải được đánh dấu bằng <code>@VMCParam</code> để ánh xạ với các tham số được đặt tên trong câu lệnh SQL.</p>
+            <p>Đối với các truy vấn phức tạp không thể biểu diễn bằng tên phương thức, bạn có thể sử dụng
+              <code>@VMCQuery</code> để viết câu lệnh SQL gốc. Các tham số của phương thức phải được đánh dấu bằng
+              <code>@VMCParam</code> để ánh xạ với các tham số được đặt tên trong câu lệnh SQL.</p>
             <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Trong UserRepository.java
@@ -586,15 +610,20 @@ public class UserService extends AbstractVMCService&lt;User, String, UserReposit
           <h2 class="text-3xl font-bold text-slate-900 border-b pb-2">9. Làm việc với DTO</h2>
           <p>Framework cung cấp các tiện ích để làm việc với Data Transfer Objects (DTOs), giúp tách biệt lớp business
             logic với lớp persistence.</p>
-        
+
           <article id="dto-mechanism" class="scroll-mt-20 pt-4">
             <h3 class="text-2xl font-semibold text-slate-800">9.1. Cơ chế Chuyển đổi</h3>
             <div class="space-y-4">
               <p>Cơ chế chuyển đổi DTO của framework dựa trên sự tương tác giữa 3 thành phần:</p>
               <ul class="list-decimal list-inside space-y-2 text-slate-600">
-                <li><strong>Interface `BaseDto&lt;E, D&gt;`</strong>: Đây là interface mà tất cả các DTO của bạn phải triển khai. Nó định nghĩa các phương thức `toEntity()` và `toDto(Model entity)`, buộc bạn phải cung cấp logic chuyển đổi.</li>
-                <li><strong>Lớp DTO của bạn</strong>: Bạn implement logic chuyển đổi cụ thể trong các phương thức `toEntity()` và `toDto()` mà bạn override.</li>
-                <li><strong>Lớp `AbstractVMCService`</strong>: Lớp service này cung cấp các phương thức nghiệp vụ cấp cao (`createFromDto`, `updateFromDto`, etc.) đóng vai trò điều phối, gọi đến các phương thức `toEntity()`/`toDto()` trên đối tượng DTO để hoàn thành công việc.</li>
+                <li><strong>Interface `BaseDto&lt;E, D&gt;`</strong>: Đây là interface mà tất cả các DTO của bạn phải
+                  triển khai. Nó định nghĩa các phương thức `toEntity()` và `toDto(Model entity)`, buộc bạn phải cung
+                  cấp logic chuyển đổi.</li>
+                <li><strong>Lớp DTO của bạn</strong>: Bạn implement logic chuyển đổi cụ thể trong các phương thức
+                  `toEntity()` và `toDto()` mà bạn override.</li>
+                <li><strong>Lớp `AbstractVMCService`</strong>: Lớp service này cung cấp các phương thức nghiệp vụ cấp
+                  cao (`createFromDto`, `updateFromDto`, etc.) đóng vai trò điều phối, gọi đến các phương thức
+                  `toEntity()`/`toDto()` trên đối tượng DTO để hoàn thành công việc.</li>
               </ul>
               <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-2">
                 <button class="copy-btn">Copy</button>
@@ -625,10 +654,12 @@ public UserResponseDto toDto(Model entity) {
               </div>
             </div>
           </article>
-        
+
           <article id="dto-usage" class="scroll-mt-20 pt-4">
             <h3 class="text-2xl font-semibold text-slate-800">9.2. Các hàm Service linh hoạt với DTO</h3>
-            <p>`AbstractVMCService` cung cấp sẵn các phương thức được nạp chồng (overloaded) để làm việc trực tiếp với DTO. Đặc biệt, nó cho phép bạn nhận một loại DTO làm đầu vào (ví dụ: `RequestDto`) và trả về một loại DTO khác làm đầu ra (ví dụ: `ResponseDto`).</p>
+            <p>`AbstractVMCService` cung cấp sẵn các phương thức được nạp chồng (overloaded) để làm việc trực tiếp với
+              DTO. Đặc biệt, nó cho phép bạn nhận một loại DTO làm đầu vào (ví dụ: `RequestDto`) và trả về một loại DTO
+              khác làm đầu ra (ví dụ: `ResponseDto`).</p>
             <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Một vài phương thức nạp chồng có sẵn trong VMCService.java
@@ -644,7 +675,8 @@ public UserResponseDto toDto(Model entity) {
 </code></pre>
             </div>
             <h4 class="text-xl font-semibold text-slate-700 mt-4">Ví dụ thực tế trong Controller</h4>
-            <p>Với các phương thức trên, code trong Controller của bạn sẽ rất tinh gọn và rõ ràng, tách biệt hoàn toàn giữa dữ liệu request và response.</p>
+            <p>Với các phương thức trên, code trong Controller của bạn sẽ rất tinh gọn và rõ ràng, tách biệt hoàn toàn
+              giữa dữ liệu request và response.</p>
             <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Trong UserController.java
@@ -741,7 +773,7 @@ public class PostCreateRequestDto extends PostBaseDto {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <!-- Kích hoạt highlight.js -->
   <script>hljs.highlightAll();</script>
-  
+
   <script src="./script.js"></script>
 </body>
 

@@ -47,19 +47,17 @@ public class QueryResultMapper {
       return Collections.emptyList();
     }
 
-    // Session cache để lưu trữ các thực thể đã được tạo trong quá trình xử lý
     Map<Class<?>, Map<Object, Model>> sessionCache = new HashMap<>();
     Map<Object, T> mainModelsMap = new LinkedHashMap<>();
 
     for (Map<String, Object> row : flatResults) {
-      // 1. Xử lý thực thể chính (root entity)
+
       T mainModel = (T) getOrCreateEntity(modelClass, fromAlias, row, sessionCache);
       if (mainModel == null) {
         continue;
       }
       mainModelsMap.put(mainModel.getPrimaryKey(), mainModel);
 
-      // 2. Xử lý các thực thể được join
       for (JoinClause join : joinClauses) {
         if (join.getRelatedClass() == null) continue;
 
@@ -67,16 +65,13 @@ public class QueryResultMapper {
             getOrCreateEntity(join.getRelatedClass(), join.getAlias(), row, sessionCache);
         if (relatedModel == null) continue;
 
-        // 3. Liên kết các thực thể với nhau
         linkEntities(mainModel, relatedModel, join.getRelationName());
       }
     }
     return new ArrayList<>(mainModelsMap.values());
   }
 
-  /**
-   * Lấy một thực thể từ cache hoặc tạo mới nếu chưa có.
-   */
+  /** Lấy một thực thể từ cache hoặc tạo mới nếu chưa có. */
   private Model getOrCreateEntity(
       Class<? extends Model> entityClass,
       String alias,
@@ -87,7 +82,7 @@ public class QueryResultMapper {
     Object pkValue = row.get(pkAlias);
 
     if (pkValue == null) {
-      return null; // Không có dữ liệu cho thực thể này trong hàng hiện tại
+      return null;
     }
 
     sessionCache.computeIfAbsent(entityClass, k -> new HashMap<>());
@@ -104,9 +99,7 @@ public class QueryResultMapper {
         });
   }
 
-  /**
-   * Liên kết hai thực thể và tự động thiết lập tham chiếu ngược.
-   */
+  /** Liên kết hai thực thể và tự động thiết lập tham chiếu ngược. */
   private void linkEntities(Model owner, Model related, String relationName) {
     try {
       Field relationField = findField(owner.getClass(), relationName);
@@ -116,14 +109,14 @@ public class QueryResultMapper {
 
       if (relMeta.isCollection()) {
         Collection<Model> collection = (Collection<Model>) relationField.get(owner);
-        // Sử dụng Set để tránh trùng lặp
+
         Set<Object> pksInCollection =
             collection.stream().map(Model::getPrimaryKey).collect(Collectors.toSet());
         if (!pksInCollection.contains(related.getPrimaryKey())) {
           collection.add(related);
           setBackReference(owner, related, relationName);
         }
-      } else { // To-One
+      } else {
         if (relationField.get(owner) == null) {
           relationField.set(owner, related);
           setBackReference(owner, related, relationName);
@@ -131,7 +124,9 @@ public class QueryResultMapper {
       }
     } catch (Exception e) {
       throw new VMCException(
-          HttpStatus.INTERNAL_SERVER_ERROR, "Could not link entities for relation: " + relationName, e);
+          HttpStatus.INTERNAL_SERVER_ERROR,
+          "Could not link entities for relation: " + relationName,
+          e);
     }
   }
 
@@ -146,21 +141,22 @@ public class QueryResultMapper {
           if (backRelMeta.isCollection()) {
             Collection<Model> collection = (Collection<Model>) backRefField.get(related);
             if (collection != null) {
-               Set<Object> pksInCollection = collection.stream().map(Model::getPrimaryKey).collect(Collectors.toSet());
-               if (!pksInCollection.contains(owner.getPrimaryKey())) {
-                   collection.add(owner);
-               }
+              Set<Object> pksInCollection =
+                  collection.stream().map(Model::getPrimaryKey).collect(Collectors.toSet());
+              if (!pksInCollection.contains(owner.getPrimaryKey())) {
+                collection.add(owner);
+              }
             }
           } else {
             if (backRefField.get(related) == null) {
               backRefField.set(related, owner);
             }
           }
-          return; // Giả định mỗi quan hệ chỉ có một mappedBy tương ứng
+          return;
         }
       }
     } catch (Exception e) {
-      // Bỏ qua lỗi
+
     }
   }
 
@@ -333,7 +329,8 @@ public class QueryResultMapper {
               .orElseThrow(
                   () ->
                       new VMCException(
-                          HttpStatus.INTERNAL_SERVER_ERROR, "Recursive relationship misconfigured."));
+                          HttpStatus.INTERNAL_SERVER_ERROR,
+                          "Recursive relationship misconfigured."));
 
       Field childField = findField(modelClass, childRelation.getFieldName());
       childField.setAccessible(true);
