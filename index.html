@@ -27,8 +27,8 @@
     content="Tài liệu hướng dẫn tương tác đầy đủ cho VMC Query Builder, một framework ORM và xây dựng truy vấn SQL linh hoạt cho Spring Boot. Tìm hiểu cách cài đặt, định nghĩa entity, tạo repository, và sử dụng các tính năng nâng cao.">
   <meta property="twitter:image" content="https://natswarchuan.github.io/vmc-query-builder/logo.jpeg">
 
-  <link rel="icon" href="https://natswarchuan.github.io/vmc-query-builder/favicon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="https://natswarchuan.github.io/vmc-query-builder/logo.jpeg">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="logo.jpeg">
   <link rel="sitemap" type="application/xml" title="Sitemap" href="./sitemap.xml">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,7 +70,7 @@
             <a href="#manytomany" class="nav-sublink block text-sm text-slate-500 hover:text-blue-600">4.3.
               Many-to-Many</a>
             <a href="#lazy-loading" class="nav-sublink block text-sm text-slate-500 hover:text-blue-600">4.4. Lazy
-              Loading & Cascade</a>
+              Loading & Tùy chọn Thao tác</a>
           </div>
         </div>
         <a href="#tao-repositories"
@@ -139,8 +139,8 @@
                 phức tạp.</li>
               <li><strong>Hỗ trợ các mối quan hệ:</strong> Quản lý đầy đủ các mối quan hệ `One-to-One`, `One-to-Many`,
                 `Many-to-One`, và `Many-to-Many`.</li>
-              <li><strong>Lazy Loading, Cascade & Orphan Removal:</strong> Tối ưu hóa hiệu năng và tự động hóa việc quản
-                lý dữ liệu liên quan.</li>
+              <li><strong>Lazy Loading & Tùy chọn Thao tác:</strong> Tối ưu hóa hiệu năng và cung cấp các tùy chọn nâng
+                cao cho việc lưu và xóa dữ liệu theo tầng.</li>
               <li><strong>Tích hợp Service Layer & DTO:</strong> Cung cấp các lớp cơ sở để giảm mã lặp lại và dễ dàng
                 chuyển đổi dữ liệu.</li>
               <li><strong>Validation Truy vấn:</strong> Cung cấp cơ chế validation mạnh mẽ dựa trên dữ liệu trong
@@ -221,14 +221,13 @@ public class QueryBuilderApplication {
                 lấy từ tên trường.</li>
             </ul>
           </div>
-          <h3 class="text-2xl font-semibold text-slate-800 pt-4">Ví dụ: Entity `User` từ `src`</h3>
+          <h3 class="text-2xl font-semibold text-slate-800 pt-4">Ví dụ: Entity `User`</h3>
           <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
             <button class="copy-btn">Copy</button>
             <pre><code class="language-java">package io.github.natswarchuan.vmc.entity;
 
 import io.github.natswarchuan.vmc.core.annotation.*;
 import io.github.natswarchuan.vmc.core.entity.Model;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -248,11 +247,9 @@ public class User extends Model&lt;String&gt; {
     private String password;
     
     @VMCOneToOne(mappedBy = "user")
-    @VMCOrphanRemoval
     private UserProfile profile;
 
     @VMCOneToMany(mappedBy = "user")
-    @VMCOrphanRemoval
     private List&lt;Post&gt; posts;
 
     @VMCManyToMany
@@ -292,7 +289,6 @@ public class User extends Model&lt;String&gt; {
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Trong User.java
 @VMCOneToOne(mappedBy = "user")
-@VMCOrphanRemoval
 private UserProfile profile;
 
 // Trong UserProfile.java
@@ -312,7 +308,6 @@ private User user;
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Trong User.java
 @VMCOneToMany(mappedBy = "user")
-@VMCOrphanRemoval
 private List&lt;Post&gt; posts;
 
 // Trong Post.java
@@ -347,28 +342,23 @@ private Set&lt;User&gt; users;
           </article>
 
           <article id="lazy-loading" class="scroll-mt-20 pt-4">
-            <h3 class="text-2xl font-semibold text-slate-800">4.4. Lazy Loading, Cascade và Orphan Removal</h3>
-            <div class="space-y-4">
+            <h3 class="text-2xl font-semibold text-slate-800">4.4. Lazy Loading & Tùy chọn Thao tác</h3>
+            <div class="space-y-6">
               <div>
                 <h4 class="text-xl font-semibold text-slate-700">Lazy Loading (Tải lười)</h4>
                 <p class="mt-2 text-slate-600">Đây là hành vi mặc định cho các mối quan hệ tập hợp
                   (<code>One-to-Many</code>, <code>Many-to-Many</code>) để tối ưu hiệu suất. Thay vì tải tất cả các thực
                   thể liên quan cùng một lúc, framework sẽ chỉ thực hiện truy vấn để lấy dữ liệu của collection khi bạn
-                  truy cập vào nó lần đầu tiên (ví dụ: gọi <code>user.getPosts()</code>). Điều này giúp tránh các truy
-                  vấn JOIN không cần thiết và cải thiện thời gian phản hồi ban đầu.</p>
+                  truy cập vào nó lần đầu tiên (ví dụ: gọi <code>user.getPosts()</code>).</p>
               </div>
               <div>
-                <h4 class="text-xl font-semibold text-slate-700">Cascade Save (Lưu theo tầng)</h4>
-                <p class="mt-2 text-slate-600">Tính năng này cho phép bạn lưu một thực thể cha và tự động lưu tất cả các
-                  thực thể con liên quan trong cùng một thao tác. <strong>Quan trọng:</strong> Tính năng này không được
-                  bật mặc định. Để kích hoạt, bạn phải:</p>
-                <ol class="list-decimal list-inside mt-2 space-y-1 text-slate-600">
-                  <li>Tạo một đối tượng <code>SaveOptions</code>.</li>
-                  <li>Sử dụng phương thức <code>.with("ten_quan_he")</code> để chỉ định chính xác những mối quan hệ nào
-                    bạn muốn lưu theo tầng.</li>
-                  <li>Truyền đối tượng <code>SaveOptions</code> này vào phương thức <code>save()</code> hoặc các phương
-                    thức <code>...FromDto()</code> trong lớp Service của bạn.</li>
-                </ol>
+                <h4 class="text-xl font-semibold text-slate-700">Tùy chọn Lưu (SaveOptions)</h4>
+                <p class="mt-2 text-slate-600">Cho phép bạn lưu một thực thể cha và tự động lưu tất cả các
+                  thực thể con liên quan trong cùng một thao tác (<strong>Cascade Save</strong>). <strong>Quan
+                    trọng:</strong> Tính năng này không được
+                  bật mặc định. Để kích hoạt, bạn phải tạo một đối tượng <code>SaveOptions</code>, sử dụng phương thức
+                  <code>.with("ten_quan_he")</code> để chỉ định các mối quan hệ cần lưu, và truyền nó vào phương thức
+                  <code>save()</code>.</p>
                 <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
                   <button class="copy-btn">Copy</button>
                   <pre><code class="language-java">// Ví dụ trong UserService
@@ -385,25 +375,25 @@ public User createUserAndProfile(UserCreateDto dto) {
                 </div>
               </div>
               <div>
-                <h4 class="text-xl font-semibold text-slate-700">Orphan Removal</h4>
-                <p class="mt-2 text-slate-600">Khi bạn xóa một thực thể con khỏi collection của thực thể cha, thực thể
-                  con đó trở thành "mồ côi". Bằng cách thêm annotation <code>@VMCOrphanRemoval</code> vào mối quan hệ
-                  (trên các quan hệ <code>One-to-One</code> và <code>One-to-Many</code>), bạn chỉ thị cho framework tự
-                  động xóa các thực thể "mồ côi" này khỏi cơ sở dữ liệu khi bạn lưu thực thể cha.</p>
+                <h4 class="text-xl font-semibold text-slate-700">Tùy chọn Xóa (RemoveOptions)</h4>
+                <p class="mt-2 text-slate-600">Tương tự như `SaveOptions`, `RemoveOptions` cung cấp một cách tường minh
+                  để kiểm soát hành vi <strong>xóa theo tầng (Cascade Remove)</strong>. Khi bạn xóa một thực thể cha,
+                  bạn có thể chỉ định để tự động xóa tất cả các thực thể con liên quan.</p>
+                <p class="mt-2 text-slate-600">Để kích hoạt, bạn cần tạo một đối tượng <code>RemoveOptions</code>, sử
+                  dụng phương thức <code>.with("ten_quan_he")</code> để chỉ định các mối quan hệ cần xóa theo, và truyền
+                  nó vào phương thức <code>remove()</code> hoặc <code>removeById()</code>.</p>
                 <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md mt-3">
                   <button class="copy-btn">Copy</button>
-                  <pre><code class="language-java">// Trong User.java
-@VMCOneToMany(mappedBy = "user")
-@VMCOrphanRemoval // Kích hoạt tính năng
-private List&lt;Post&gt; posts;
+                  <pre><code class="language-java">// ... trong UserService
+import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 
-// ... trong UserService
-public void removeFirstPost(String userId) {
-    User user = repository.findById(userId).orElse(null);
-    if (user != null && !user.getPosts().isEmpty()) {
-        user.getPosts().remove(0); // Xóa bài post đầu tiên khỏi danh sách
-        repository.save(user); // Khi lưu user, bài post đã bị xóa sẽ bị xóa khỏi DB
-    }
+// Ví dụ: Xóa cứng User và tất cả các Post, Profile liên quan
+public void deleteUserAndAssociations(String userId) {
+    RemoveOptions options = new RemoveOptions()
+                                  .with("posts")    // Xóa các Post liên quan
+                                  .with("profile"); // Xóa UserProfile liên quan
+                                  
+    repository.removeById(userId, options);
 }
 </code></pre>
                 </div>
@@ -446,11 +436,13 @@ public interface UserRepository extends VMCRepository&lt;User, String&gt; {
               tích tên phương thức của bạn và tạo ra câu lệnh SQL tương ứng. Cấu trúc của tên phương thức tuân theo mẫu
               sau:</p>
             <p class="font-mono bg-slate-100 p-2 rounded-md text-sm mt-2">
-              <code>(action)(Dto)?(quantifier)By(criteria)(OrderBy...)</code></p>
+              <code>(action)(Dto)?(quantifier)By(criteria)(OrderBy...)</code>
+            </p>
 
             <div class="mt-4 space-y-2">
               <p><strong>Action:</strong> Tiền tố bắt buộc, xác định hành động của truy vấn. Bao gồm: <code>find</code>,
-                <code>get</code>, <code>count</code>, <code>delete</code>, <code>remove</code>.</p>
+                <code>get</code>, <code>count</code>, <code>delete</code>, <code>remove</code>.
+              </p>
               <p><strong>Dto (Tùy chọn):</strong> Nếu có từ khóa `Dto`, phương thức sẽ tự động trả về đối tượng DTO thay
                 vì Entity.</p>
               <p><strong>Quantifier (Tùy chọn):</strong> Giới hạn kết quả trả về. Bao gồm: <code>All</code> (mặc định
@@ -459,7 +451,8 @@ public interface UserRepository extends VMCRepository&lt;User, String&gt; {
                 các điều kiện `WHERE` bằng cách kết hợp tên thuộc tính của Entity với các toán tử được hỗ trợ. Các điều
                 kiện có thể được nối với nhau bằng <code>And</code> hoặc <code>Or</code>.</p>
               <p><strong>OrderBy (Tùy chọn):</strong> Sắp xếp kết quả. Cú pháp:
-                <code>OrderBy&lt;PropertyName&gt;Asc|Desc</code>.</p>
+                <code>OrderBy&lt;PropertyName&gt;Asc|Desc</code>.
+              </p>
             </div>
 
             <h4 class="text-xl font-semibold text-slate-700 mt-4">Các toán tử điều kiện được hỗ trợ</h4>
@@ -537,7 +530,8 @@ Optional&lt;UserDto&gt; findDtoByEmail(String email);
             <h3 class="text-2xl font-semibold text-slate-800">6.2. Truy vấn tùy chỉnh với @VMCQuery</h3>
             <p>Đối với các truy vấn phức tạp không thể biểu diễn bằng tên phương thức, bạn có thể sử dụng
               <code>@VMCQuery</code> để viết câu lệnh SQL gốc. Các tham số của phương thức phải được đánh dấu bằng
-              <code>@VMCParam</code> để ánh xạ với các tham số được đặt tên trong câu lệnh SQL.</p>
+              <code>@VMCParam</code> để ánh xạ với các tham số được đặt tên trong câu lệnh SQL.
+            </p>
             <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
               <button class="copy-btn">Copy</button>
               <pre><code class="language-java">// Trong UserRepository.java
