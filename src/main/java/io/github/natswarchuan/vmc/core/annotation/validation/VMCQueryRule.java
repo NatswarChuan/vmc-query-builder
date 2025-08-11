@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 import io.github.natswarchuan.vmc.core.entity.Model;
 import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
-import io.github.natswarchuan.vmc.core.validation.VMCQueryValidator;
+import io.github.natswarchuan.vmc.core.validation.VMCQueryRuleValidator;
 
 /**
  * Annotation để kiểm tra sự tồn tại hoặc duy nhất của một giá trị trong cơ sở dữ liệu. Sử dụng với
@@ -17,7 +17,7 @@ import io.github.natswarchuan.vmc.core.validation.VMCQueryValidator;
  *
  * @author NatswarChuan
  */
-@Constraint(validatedBy = VMCQueryValidator.class)
+@Constraint(validatedBy = VMCQueryRuleValidator.class)
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VMCQueryRule {

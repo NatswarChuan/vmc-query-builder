@@ -1,5 +1,6 @@
 package io.github.natswarchuan.vmc.core.exception;
 
+import io.github.natswarchuan.vmc.core.dto.ErrorResponse;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,18 +13,15 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import io.github.natswarchuan.vmc.core.dto.ErrorResponse;
-
 /**
  * Bộ xử lý ngoại lệ toàn cục cho ứng dụng.
  *
  * <p>Lớp này sử dụng {@link RestControllerAdvice} để bắt và xử lý các ngoại lệ được ném ra từ bất
  * kỳ controller nào trong ứng dụng. Nó đảm bảo rằng các lỗi sẽ được chuyển thành một định dạng JSON
  * nhất quán trước khi gửi về cho client.
- * 
+ *
  * @author NatswarChuan
  */
-
 @RestControllerAdvice
 @Slf4j
 public class VMCExceptionHandler {
@@ -59,8 +57,8 @@ public class VMCExceptionHandler {
     body.put("error", "Validation Failed");
 
     List<String> errors =
-        ex.getBindingResult().getFieldErrors().stream()
-            .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+        ex.getBindingResult().getAllErrors().stream()
+            .map(error -> error.getDefaultMessage())
             .collect(Collectors.toList());
 
     body.put("messages", errors);

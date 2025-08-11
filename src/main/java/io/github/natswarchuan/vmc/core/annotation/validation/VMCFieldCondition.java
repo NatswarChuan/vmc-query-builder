@@ -1,29 +1,50 @@
 package io.github.natswarchuan.vmc.core.annotation.validation;
 
+import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
-
 /**
- * Định nghĩa một điều kiện đơn lẻ để sử dụng trong @VMCClassValidation. Annotation này không phải
- * là một constraint độc lập.
+ * Định nghĩa một điều kiện đơn lẻ để sử dụng trong @VMCClassValidation.
  *
  * @author NatswarChuan
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})
 public @interface VMCFieldCondition {
+
+  /** Enum để chỉ định nguồn của giá trị validation. */
+  enum Source {
+    /** Giá trị được lấy từ một trường trong request body (DTO). */
+    BODY,
+    /** Giá trị được lấy từ một path variable trên URL. */
+    PATH,
+    /** Giá trị được lấy từ một request parameter trên URL. */
+    PARAM
+  }
+
   /**
-   * (Bắt buộc) Tên của trường (field) trong đối tượng đang được validate (ví dụ: DTO). Giá trị của
-   * trường này sẽ được sử dụng để so sánh.
+   * (Bắt buộc) Tên của trường nguồn.
+   *
+   * <ul>
+   *   <li>Nếu source là {@code BODY}, đây là tên trường trong DTO.
+   *   <li>Nếu source là {@code PATH}, đây là tên của path variable.
+   *   <li>Nếu source là {@code PARAM}, đây là tên của request parameter.
+   * </ul>
    */
-  String field();
+  String name();
+
+  /**
+   * (Tùy chọn) Nguồn của giá trị để validation.
+   *
+   * @return Nguồn dữ liệu, mặc định là {@code Source.BODY}.
+   */
+  Source source() default Source.BODY;
 
   /**
    * (Tùy chọn) Tên của cột trong entity cơ sở dữ liệu để so sánh. Nếu không được chỉ định,
-   * framework sẽ sử dụng tên giống với 'field'.
+   * framework sẽ sử dụng tên giống với thuộc tính 'name'.
    */
   String column() default "";
 
