@@ -157,24 +157,43 @@
           </p>
           <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
             <button class="copy-btn">Copy</button>
-            <pre><code class="language-xml">&lt;dependencies&gt;
-    &lt;!-- Spring Boot JDBC Starter --&gt;
+            <pre><code class="language-xml">&lt;repositories&gt;
+    &lt;repository&gt;
+        &lt;id&gt;jitpack.io&lt;/id&gt;
+        &lt;url&gt;https://jitpack.io&lt;/url&gt;
+    &lt;/repository&gt;
+&lt;/repositories&gt;
+&lt;properties&gt;
+ &lt;!-- Phiên bản mới nhất lấy tại "https://jitpack.io/#natswarchuan/vmc-query-builder" --&gt;
+    &lt;vmc.version&gt;${Phiên bản mới nhất}&lt;/vmc.version&gt;
+    &lt;lombok.version&gt;1.18.30&lt;/lombok.version&gt;
+&lt;/properties&gt;
+&lt;dependencies&gt;
+    &lt;!-- Thư viện VMC Query Builder --&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;com.github.natswarchuan&lt;/groupId&gt;
+        &lt;artifactId&gt;vmc-query-builder&lt;/artifactId&gt;
+        &lt;version&gt;${vmc.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+
+    &lt;!-- Spring Boot Starter cho việc xây dựng ứng dụng web, bao gồm RESTful API --&gt;
     &lt;dependency&gt;
         &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-        &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+        &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
     &lt;/dependency&gt;
-    
-    &lt;!-- Spring Boot Validation Starter --&gt;
+
+    &lt;!-- Spring Boot Starter cho việc xác thực dữ liệu (validation) --&gt;
     &lt;dependency&gt;
         &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
         &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
     &lt;/dependency&gt;
 
-    &lt;!-- Database Driver (ví dụ: MySQL) --&gt;
+    &lt;!-- lombok cho việc tạo các getter, setter và constructor đơn giản --&gt;
     &lt;dependency&gt;
-        &lt;groupId&gt;mysql&lt;/groupId&gt;
-        &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
-        &lt;scope&gt;runtime&lt;/scope&gt;
+        &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+        &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+        &lt;version&gt;${lombok.version}&lt;/version&gt;
+        &lt;scope&gt;provided&lt;/scope&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;</code></pre>
           </div>
@@ -189,23 +208,7 @@ spring.datasource.password=
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver</code></pre>
           </div>
 
-          <h3 class="text-2xl font-semibold text-slate-800 pt-4">Bước 3: Kích hoạt VMC Repositories</h3>
-          <p>Trong lớp Application chính, thêm annotation `@EnableVMCRepositories`.</p>
-          <div class="code-block bg-slate-800 text-white p-4 rounded-lg shadow-md">
-            <button class="copy-btn">Copy</button>
-            <pre><code class="language-java">import io.github.natswarchuan.vmc.core.config.EnableVMCRepositories;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-@EnableVMCRepositories(basePackages = "io.github.natswarchuan.vmc.repository")
-public class QueryBuilderApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(QueryBuilderApplication.class, args);
-    }
-}</code></pre>
-          </div>
         </section>
 
         <section id="dinh-nghia-entities" class="mb-12 space-y-4 scroll-mt-20">
@@ -228,48 +231,28 @@ public class QueryBuilderApplication {
 
 import io.github.natswarchuan.vmc.core.annotation.*;
 import io.github.natswarchuan.vmc.core.entity.Model;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
+import lombok.*;
 
+@Data
 @VMCTable(name = "users")
-public class User extends Model&lt;String&gt; {
+public class User extends Model {
 
-    @VMCPrimaryKey
-    private String id;
+  @VMCPrimaryKey(name = "id")
+  @VMCColumn(name = "id")
+  private Long id;
 
-    @VMCColumn
-    private String name;
+  @VMCColumn(name = "name")
+  private String name;
 
-    @VMCColumn
-    private String email;
+  @VMCColumn(name = "email")
+  private String email;
 
-    @VMCColumn
-    private String password;
-    
-    @VMCOneToOne(mappedBy = "user")
-    private UserProfile profile;
+  @VMCColumn(name = "created_at")
+  private LocalDateTime createdAt;
 
-    @VMCOneToMany(mappedBy = "user")
-    private List&lt;Post&gt; posts;
-
-    @VMCManyToMany
-    @VMCJoinTable(
-            name = "user_roles",
-            joinColumns = @VMCJoinColumn(name = "user_id", referencedColumnName = "id"),
-            inverseJoinColumns = @VMCJoinColumn(name = "role_id", referencedColumnName = "id")
-    )
-    private Set&lt;Role&gt; roles;
-
-    // Getters, Setters, and mandatory ID methods
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public void setId(String id) {
-        this.id = id;
-    }
+  @VMCColumn(name = "updated_at")
+  private LocalDateTime updatedAt;
     // ...
 }
 </code></pre>
@@ -293,7 +276,7 @@ private UserProfile profile;
 
 // Trong UserProfile.java
 @VMCOneToOne
-@VMCJoinColumn(name = "user_id", referencedColumnName = "id")
+@VMCJoinColumn(name = "user_id")
 private User user;
 </code></pre>
             </div>
@@ -312,7 +295,7 @@ private List&lt;Post&gt; posts;
 
 // Trong Post.java
 @VMCManyToOne
-@VMCJoinColumn(name = "user_id", referencedColumnName = "id")
+@VMCJoinColumn(name = "user_id")
 private User user;
 </code></pre>
             </div>
@@ -328,10 +311,9 @@ private User user;
               <pre><code class="language-java">// Trong User.java
 @VMCManyToMany
 @VMCJoinTable(
-        name = "user_roles",
-        joinColumns = @VMCJoinColumn(name = "user_id", referencedColumnName = "id"),
-        inverseJoinColumns = @VMCJoinColumn(name = "role_id", referencedColumnName = "id")
-)
+    name = "user_roles",
+    joinColumns = @VMCJoinColumn(name = "user_id"),
+    inverseJoinColumns = @VMCJoinColumn(name = "role_id"))
 private Set&lt;Role&gt; roles;
 
 // Trong Role.java
@@ -389,7 +371,7 @@ public User createUserAndProfile(UserCreateDto dto) {
 import io.github.natswarchuan.vmc.core.persistence.service.RemoveOptions;
 
 // Ví dụ: Xóa cứng User và tất cả các Post, Profile liên quan
-public void deleteUserAndAssociations(String userId) {
+public void deleteUserAndAssociations(Long userId) {
     RemoveOptions options = new RemoveOptions()
                                   .with("posts")    // Xóa các Post liên quan
                                   .with("profile"); // Xóa UserProfile liên quan
@@ -418,8 +400,8 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface UserRepository extends VMCRepository&lt;User, String&gt; {
-    List&lt;User&gt; findByNameContaining(String name);
+public interface UserRepository extends VMCRepository&lt;User, Long &gt; {
+  List&lt;User&gt; findByNameContaining(String name);
 }
 </code></pre>
           </div>
@@ -560,15 +542,12 @@ List&lt;User&gt; findUsersByRoleName(@VMCParam("roleName") String roleName);
 import io.github.natswarchuan.vmc.core.query.enums.*;
 
 // ... trong UserService.java
-public List&lt;User&gt; findWithQueryBuilder(String roleName) {
+  public List<User> findWithQueryBuilder(String roleName) {
     return VMCQueryBuilder.from(User.class, "u")
-            .select("u.id", "u.name", "u.email")
-            // Join với bảng trung gian user_roles
-            .join(VMCSqlJoinType.INNER, "user_roles", "ur", "u.id", "=", "ur.user_id")
-            // Join với bảng roles
-            .join(VMCSqlJoinType.INNER, "roles", "r", "ur.role_id", "=", "r.id")
-            .where("r.name", VMCSqlOperator.EQUAL, roleName)
-            .get();
+        .join(VMCSqlJoinType.INNER_JOIN, "user_roles", "ur", "u.id", "=", "ur.user_id")
+        .join(VMCSqlJoinType.INNER_JOIN, "roles", "r", "ur.role_id", "=", "r.id")
+        .where("r.name", VMCSqlOperator.LIKE, roleName)
+        .get();
 }</code></pre>
           </div>
         </section>
