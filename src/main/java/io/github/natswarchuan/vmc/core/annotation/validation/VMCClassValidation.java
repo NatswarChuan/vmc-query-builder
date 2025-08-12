@@ -1,5 +1,7 @@
 package io.github.natswarchuan.vmc.core.annotation.validation;
 
+import io.github.natswarchuan.vmc.core.entity.Model;
+import io.github.natswarchuan.vmc.core.validation.VMCClassValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 import java.lang.annotation.ElementType;
@@ -7,9 +9,6 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import io.github.natswarchuan.vmc.core.entity.Model;
-import io.github.natswarchuan.vmc.core.validation.VMCClassValidator;
 
 /**
  * Một annotation validation ở cấp độ class để thực hiện các truy vấn phức tạp, kiểm tra sự tồn tại
@@ -39,22 +38,30 @@ import io.github.natswarchuan.vmc.core.validation.VMCClassValidator;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(VMCClassValidation.List.class)
 public @interface VMCClassValidation {
-  /** (Bắt buộc) Lớp Entity chính (bảng FROM) để thực hiện truy vấn kiểm tra. */
+
+  /**
+   * @return lớp entity chính (bảng FROM) để thực hiện truy vấn kiểm tra
+   */
   Class<? extends Model> entity();
 
-  /** (Tùy chọn) Bí danh cho entity chính. Mặc định là "root". */
+  /**
+   * @return bí danh (alias) cho entity chính, mặc định là "root"
+   */
   String alias() default "root";
 
-  /** (Tùy chọn) Một mảng các định nghĩa JOIN để liên kết với các bảng khác. */
+  /**
+   * @return một mảng các định nghĩa JOIN để liên kết với các bảng khác
+   */
   VMCJoin[] joins() default {};
 
   /**
-   * (Bắt buộc) Một mảng các điều kiện. Các điều kiện này sẽ được kết hợp với nhau bằng toán tử AND.
+   * @return một mảng các điều kiện cho mệnh đề WHERE, các điều kiện sẽ được kết hợp bằng toán tử
+   *     AND
    */
   VMCFieldCondition[] conditions();
 
   /**
-   * (Tùy chọn) Điều kiện validation:
+   * Xác định điều kiện validation.
    *
    * <ul>
    *   <li>{@code true}: Validation thất bại nếu query tìm thấy bản ghi (dùng để kiểm tra sự duy
@@ -63,21 +70,32 @@ public @interface VMCClassValidation {
    *       tồn tại).
    * </ul>
    *
-   * Mặc định là {@code true}.
+   * @return {@code true} nếu validation yêu cầu bản ghi không tồn tại, mặc định là {@code true}
    */
   boolean mustNotExist() default true;
 
-  /** (Bắt buộc) Thông báo lỗi sẽ hiển thị khi validation thất bại. */
+  /**
+   * @return thông báo lỗi sẽ hiển thị khi validation thất bại
+   */
   String message();
 
+  /**
+   * @return các nhóm validation mà constraint này thuộc về
+   */
   Class<?>[] groups() default {};
 
+  /**
+   * @return payload tùy chỉnh có thể được gán cho constraint này
+   */
   Class<? extends Payload>[] payload() default {};
 
-  /** Container cho phép lặp lại annotation @VMCClassValidation. */
+  /** Container cho phép lặp lại annotation {@code @VMCClassValidation}. */
   @Target({ElementType.TYPE})
   @Retention(RetentionPolicy.RUNTIME)
   @interface List {
+    /**
+     * @return một mảng các annotation {@code VMCClassValidation}
+     */
     VMCClassValidation[] value();
   }
 }

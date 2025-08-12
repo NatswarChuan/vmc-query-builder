@@ -32,6 +32,11 @@ import org.springframework.transaction.annotation.Transactional;
 public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepository<T, ID>>
     implements VMCService<T, ID> {
 
+  /**
+   * Đối tượng repository để truy cập dữ liệu.
+   *
+   * <p>Tham chiếu này là bất biến và không thể thay đổi sau khi được khởi tạo.
+   */
   protected final R repository;
 
   /**
@@ -227,7 +232,7 @@ public abstract class AbstractVMCService<T extends Model, ID, R extends VMCRepos
     }
     T entityFromDto = requestDto.toEntity();
     entityFromDto.setPrimaryKey(id);
-    T updatedEntity = this.update(id,entityFromDto, options);
+    T updatedEntity = this.update(id, entityFromDto, options);
     try {
       O responseDto = responseDtoClass.getDeclaredConstructor().newInstance();
       return responseDto.toDto(updatedEntity);

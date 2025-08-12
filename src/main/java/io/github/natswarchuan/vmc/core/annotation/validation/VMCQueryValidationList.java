@@ -6,12 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation container để cho phép lặp lại @VMCQueryValidation.
+ * Annotation container để cho phép lặp lại {@code @VMCQueryValidation}.
  *
  * @author NatswarChuan
  */
 @Target({ElementType.FIELD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface VMCQueryValidationList {
-    VMCQueryValidation[] value();
+
+  /**
+   * @return một mảng các annotation {@code VMCQueryValidation} được áp dụng
+   */
+  VMCQueryValidation[] value();
 }

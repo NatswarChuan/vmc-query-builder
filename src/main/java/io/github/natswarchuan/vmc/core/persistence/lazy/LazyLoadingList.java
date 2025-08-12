@@ -16,6 +16,11 @@ import java.util.ListIterator;
  * @author NatswarChuan
  */
 public class LazyLoadingList<E> extends AbstractLazyLoadingCollection<E> implements List<E> {
+  /**
+   * Khởi tạo một danh sách mới hỗ trợ cơ chế tải lười (lazy loading).
+   *
+   * @param loader đối tượng sẽ được sử dụng để tải dữ liệu khi cần
+   */
   public LazyLoadingList(LazyLoader<E> loader) {
     super(loader);
   }

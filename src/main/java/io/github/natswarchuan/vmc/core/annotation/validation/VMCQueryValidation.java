@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * <p>Annotation này cung cấp một cơ chế mạnh mẽ để xác thực dữ liệu đầu vào dựa trên trạng thái
  * hiện tại của cơ sở dữ liệu, kết hợp thông tin từ nhiều nguồn trong một HTTP request.
  *
- * <h3>Cú pháp tham số trong câu query</h3>
+ * <h2>Cú pháp tham số trong câu query</h2>
  *
  * <p>Câu lệnh SQL trong thuộc tính {@code query()} sử dụng cú pháp tham số đặt tên đặc biệt để tham
  * chiếu đến các giá trị từ các phần khác nhau của request:

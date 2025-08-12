@@ -15,6 +15,11 @@ import java.util.Set;
  * @author NatswarChuan
  */
 public class LazyLoadingSet<E> extends AbstractLazyLoadingCollection<E> implements Set<E> {
+  /**
+   * Khởi tạo một tập hợp (Set) mới hỗ trợ cơ chế tải lười (lazy loading).
+   *
+   * @param loader đối tượng sẽ được sử dụng để tải dữ liệu khi cần
+   */
   public LazyLoadingSet(LazyLoader<E> loader) {
     super(loader);
   }

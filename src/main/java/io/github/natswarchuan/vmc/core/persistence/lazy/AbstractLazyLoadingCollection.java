@@ -14,10 +14,24 @@ import java.util.Iterator;
  * @author NatswarChuan
  */
 public abstract class AbstractLazyLoadingCollection<E> implements Collection<E> {
+  /**
+   * Bộ sưu tập nội bộ để lưu trữ dữ liệu sau khi đã được tải.
+   *
+   * <p>Ban đầu, giá trị của nó là {@code null} và sẽ được khởi tạo trong lần truy cập đầu tiên.
+   */
   protected Collection<E> delegate;
+
+  /** Đối tượng chịu trách nhiệm tải dữ liệu khi cần, không thể thay đổi sau khi khởi tạo. */
   private final LazyLoader<E> loader;
+
+  /** Cờ đánh dấu trạng thái đã khởi tạo của bộ sưu tập. {@code true} nếu dữ liệu đã được tải. */
   private boolean initialized = false;
 
+  /**
+   * Khởi tạo một collection với cơ chế tải lười.
+   *
+   * @param loader đối tượng loader sẽ được dùng để tải dữ liệu khi có yêu cầu
+   */
   public AbstractLazyLoadingCollection(LazyLoader<E> loader) {
     this.loader = loader;
   }

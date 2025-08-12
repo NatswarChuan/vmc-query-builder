@@ -50,11 +50,12 @@ public class CascadeRemoveHandler {
   /**
    * Xử lý tất cả các hành động cascade cho một thực thể sắp bị xóa.
    *
-   * <p>Phương thức này duyệt qua tất cả các mối quan hệ của thực thể và gọi các phương thức xử lý
-   * tương ứng dựa trên loại quan hệ (One-to-Many, One-to-One, Many-to-Many).
+   * <p>Phương thức này duyệt qua các mối quan hệ được chỉ định trong {@code options} và gọi các
+   * phương thức xử lý tương ứng dựa trên loại quan hệ (One-to-Many, One-to-One, v.v.).
    *
-   * @param model Thực thể sắp bị xóa.
-   * @throws Exception nếu có lỗi xảy ra trong quá trình xử lý.
+   * @param model thực thể sắp bị xóa
+   * @param options các tùy chọn cho hành động xóa, xác định những quan hệ nào sẽ được xử lý cascade
+   * @throws Exception nếu có lỗi xảy ra trong quá trình xử lý
    */
   public void handleCascades(Model model, RemoveOptions options) throws Exception {
     EntityMetadata metadata = MetadataCache.getMetadata(getUnproxiedClass(model.getClass()));

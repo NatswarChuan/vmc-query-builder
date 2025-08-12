@@ -217,7 +217,11 @@ public interface VMCService<T extends Model, ID> {
    */
   void deleteById(ID id, RemoveOptions options);
 
-  /** Xóa một thực thể đã cho. */
+  /**
+   * Xóa một thực thể đã cho.
+   *
+   * @param entity Thực thể cần xóa.
+   */
   void delete(T entity);
 
   /**

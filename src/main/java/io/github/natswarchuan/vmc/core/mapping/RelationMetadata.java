@@ -38,15 +38,24 @@ public class RelationMetadata {
   /** Siêu dữ liệu của bảng liên kết, chỉ được sử dụng cho quan hệ Many-to-Many. */
   private final JoinTableMetadata joinTable;
 
-  /** Enum định nghĩa các loại mối quan hệ được hỗ trợ. */
+  /** Đại diện cho các loại mối quan hệ giữa các thực thể (entity). */
   public enum RelationType {
+
+    /** Mối quan hệ một-một. */
     ONE_TO_ONE,
+
+    /** Mối quan hệ một-nhiều. */
     ONE_TO_MANY,
+
+    /** Mối quan hệ nhiều-một. */
     MANY_TO_ONE,
+
+    /** Mối quan hệ nhiều-nhiều. */
     MANY_TO_MANY;
 
     /**
      * Kiểm tra xem loại quan hệ này có phải là một collection (ToMany) hay không.
+     *
      * @return true nếu là OneToMany hoặc ManyToMany, ngược lại là false.
      */
     public boolean isCollection() {
@@ -56,15 +65,19 @@ public class RelationMetadata {
 
   /**
    * Kiểm tra xem mối quan hệ này có phải là phía sở hữu của một liên kết (association) hay không.
-   * Cụ thể là các quan hệ ToOne (ManyToOne, OneToOne) mà có định nghĩa cột khóa ngoại (@VMCJoinColumn).
+   * Cụ thể là các quan hệ ToOne (ManyToOne, OneToOne) mà có định nghĩa cột khóa ngoại
+   * (@VMCJoinColumn).
+   *
    * @return true nếu là phía sở hữu của một liên kết ToOne, ngược lại là false.
    */
   public boolean isOwningSideOfAssociation() {
-    return (type == RelationType.MANY_TO_ONE || type == RelationType.ONE_TO_ONE) && joinColumnName != null;
+    return (type == RelationType.MANY_TO_ONE || type == RelationType.ONE_TO_ONE)
+        && joinColumnName != null;
   }
 
   /**
    * Kiểm tra xem mối quan hệ này có phải là một collection (ToMany) hay không.
+   *
    * @return true nếu là OneToMany hoặc ManyToMany, ngược lại là false.
    */
   public boolean isCollection() {
@@ -72,22 +85,24 @@ public class RelationMetadata {
   }
 
   /**
-   * Kiểm tra xem mối quan hệ này có phải là phía nghịch đảo (inverse side) hay không,
-   * được xác định bởi thuộc tính 'mappedBy'.
+   * Kiểm tra xem mối quan hệ này có phải là phía nghịch đảo (inverse side) hay không, được xác định
+   * bởi thuộc tính 'mappedBy'.
+   *
    * @return true nếu là phía nghịch đảo, ngược lại là false.
    */
   public boolean isInverseSide() {
     return mappedBy != null && !mappedBy.isEmpty();
   }
-  
+
   /**
    * Kiểm tra xem đây có phải là phía sở hữu (owning side) của mối quan hệ ManyToMany hay không.
    * Phía sở hữu là phía định nghĩa @VMCJoinTable.
+   *
    * @return true nếu là phía sở hữu của quan hệ ManyToMany.
    */
   public boolean isOwningSide() {
     if (type == RelationType.MANY_TO_MANY) {
-        return this.joinTable != null;
+      return this.joinTable != null;
     }
     return isOwningSideOfAssociation();
   }
