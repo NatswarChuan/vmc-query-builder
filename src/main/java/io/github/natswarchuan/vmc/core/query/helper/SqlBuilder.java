@@ -8,6 +8,7 @@ import io.github.natswarchuan.vmc.core.query.clause.OrderByClause;
 import io.github.natswarchuan.vmc.core.query.clause.PreparedQuery;
 import io.github.natswarchuan.vmc.core.query.clause.WhereClause;
 import io.github.natswarchuan.vmc.core.query.enums.VMCSqlOperator;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,7 +92,29 @@ public class SqlBuilder {
       addDefaultSelects(mainMetadata);
     }
 
-    StringBuilder sql = new StringBuilder("SELECT ").append(String.join(", ", this.selectColumns));
+    List<String> processedSelectColumns = new ArrayList<>();
+
+    if (this.selectColumns.isEmpty()) {
+
+      addDefaultSelects(mainMetadata);
+      processedSelectColumns.addAll(this.selectColumns);
+    } else {
+      for (String column : this.selectColumns) {
+        if (column.contains("(") || column.toLowerCase().contains(" as ")) {
+          processedSelectColumns.add(column);
+        } else {
+          String baseColumnName =
+              column.contains(".") ? column.substring(column.lastIndexOf(".") + 1) : column;
+          processedSelectColumns.add(
+              String.format(
+                  "%s.%s AS %s_%s",
+                  this.fromAlias, baseColumnName, this.fromAlias, baseColumnName));
+        }
+      }
+    }
+
+    StringBuilder sql =
+        new StringBuilder("SELECT ").append(String.join(", ", processedSelectColumns));
     sql.append(" FROM ").append(mainMetadata.getTableName()).append(" AS ").append(this.fromAlias);
 
     appendJoins(sql);
