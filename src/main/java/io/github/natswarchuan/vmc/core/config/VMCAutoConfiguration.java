@@ -4,6 +4,7 @@ import io.github.natswarchuan.vmc.core.repository.VMCRepository;
 import io.github.natswarchuan.vmc.core.repository.support.VMCRepositoryFactoryBean;
 import java.util.HashSet;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -30,6 +31,7 @@ import org.springframework.util.StringUtils;
 @Configuration
 @ComponentScan("io.github.natswarchuan.vmc.core")
 @MapperScan("io.github.natswarchuan.vmc.core.persistence.mapper")
+@Slf4j
 public class VMCAutoConfiguration implements BeanDefinitionRegistryPostProcessor {
 
   @Override
@@ -57,7 +59,7 @@ public class VMCAutoConfiguration implements BeanDefinitionRegistryPostProcessor
           registry.registerBeanDefinition(
               generateBeanName(repositoryInterface.getSimpleName()), builder.getBeanDefinition());
         } catch (ClassNotFoundException e) {
-
+          log.warn("Không tìm thấy lớp repository, bỏ qua: {}", e.getMessage());
         }
       }
     }
@@ -101,7 +103,7 @@ public class VMCAutoConfiguration implements BeanDefinitionRegistryPostProcessor
             return Set.of(beanClass.getPackageName());
           }
         } catch (Exception e) {
-
+          log.warn("Lỗi khi quét package, có thể không tìm thấy bean @SpringBootApplication", e);
         }
       }
     }
