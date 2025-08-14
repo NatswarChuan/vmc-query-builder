@@ -5,14 +5,12 @@
     <nav id="navigation" class="flex flex-col space-y-2">
       <div v-for="section in sections" :key="section.id">
         <a :href="`#${section.id}`"
-           @click.prevent="$emit('navigate', section.id)"
            class="nav-link text-slate-600 hover:bg-slate-100 p-2 rounded-md transition-colors duration-200 block"
            :class="{ 'active': currentSectionId === section.id }">
           {{ section.title }}
         </a>
         <div v-if="section.subs && section.subs.length > 0" class="ml-4 mt-2 space-y-2 border-l-2 border-slate-200 pl-4">
           <a v-for="sub in section.subs" :key="sub.id" :href="`#${sub.id}`"
-             @click.prevent="$emit('navigate', sub.id)"
              class="nav-sublink block text-sm text-slate-500 hover:text-blue-600">
             {{ sub.title }}
           </a>
@@ -27,5 +25,4 @@ defineProps({
   sections: Array,
   currentSectionId: String
 });
-defineEmits(['navigate']);
 </script>

@@ -1,7 +1,6 @@
 <template>
   <div class="flex flex-col md:flex-row min-h-screen">
-    <Sidebar ref="sidebarRef" :sections="sections" :current-section-id="currentSection.id"
-      @navigate="navigateToSection" />
+    <Sidebar ref="sidebarRef" :sections="sections" :current-section-id="currentSection.id" />
     <MainContent :key="currentSection.id" :is-first-section="isFirstSection" :is-last-section="isLastSection"
       :previous-section-title="previousSectionTitle" :next-section-title="nextSectionTitle" @next="goToNextSection"
       @prev="goToPreviousSection">
@@ -69,6 +68,44 @@ const currentSectionIndex = ref(0);
 const sidebarRef = ref(null);
 let resizeObserver = null;
 
+const handleHashChange = () => {
+  const hash = window.location.hash.replace('#', '');
+  const sectionId = hash || sections.value[0].id;
+
+  let targetIndex = sections.value.findIndex(s => s.id === sectionId);
+  let anchorId = null;
+
+  if (targetIndex === -1) {
+    for (let i = 0; i < sections.value.length; i++) {
+      if (sections.value[i].subs.some(sub => sub.id === sectionId)) {
+        targetIndex = i;
+        anchorId = sectionId;
+        break;
+      }
+    }
+  }
+
+  if (targetIndex !== -1) {
+      if (currentSectionIndex.value !== targetIndex) {
+          currentSectionIndex.value = targetIndex;
+      }
+      
+      nextTick(() => {
+        const el = document.getElementById(anchorId || sectionId);
+        if (el) {
+          if (anchorId) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            window.scrollTo(0, 0);
+          }
+        }
+      });
+  } else {
+      // Nếu hash không hợp lệ, chuyển về section đầu tiên
+      currentSectionIndex.value = 0;
+      window.location.hash = sections.value[0].id;
+  }
+};
 
 
 onMounted(() => {
@@ -83,15 +120,18 @@ onMounted(() => {
         root.style.setProperty('--sidebar-width', '0px');
       }
     });
-
     resizeObserver.observe(sidebarEl);
   }
+  
+  window.addEventListener('hashchange', handleHashChange);
+  handleHashChange(); // Xử lý hash ban đầu khi tải trang
 });
 
 onUnmounted(() => {
   if (resizeObserver) {
     resizeObserver.disconnect();
   }
+  window.removeEventListener('hashchange', handleHashChange);
 });
 
 
@@ -108,53 +148,15 @@ const nextSectionTitle = computed(() => {
   return !isLastSection.value ? sections.value[currentSectionIndex.value + 1].title : null;
 });
 
-const scrollToTop = () => {
-  window.scrollTo(0, 0);
-};
-
 const goToNextSection = () => {
   if (!isLastSection.value) {
-    currentSectionIndex.value++;
-    scrollToTop();
+    window.location.hash = sections.value[currentSectionIndex.value + 1].id;
   }
 };
 
 const goToPreviousSection = () => {
   if (!isFirstSection.value) {
-    currentSectionIndex.value--;
-    scrollToTop();
-  }
-};
-
-const navigateToSection = (sectionId) => {
-  let targetIndex = -1;
-  let anchorId = null;
-
-  targetIndex = sections.value.findIndex(s => s.id === sectionId);
-
-  if (targetIndex === -1) {
-    for (let i = 0; i < sections.value.length; i++) {
-      if (sections.value[i].subs.some(sub => sub.id === sectionId)) {
-        targetIndex = i;
-        anchorId = sectionId;
-        break;
-      }
-    }
-  }
-
-  if (targetIndex !== -1 && currentSectionIndex.value !== targetIndex) {
-    currentSectionIndex.value = targetIndex;
-  }
-
-  if (anchorId) {
-    nextTick(() => {
-      const el = document.getElementById(anchorId);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  } else if (targetIndex !== -1) {
-    scrollToTop();
+    window.location.hash = sections.value[currentSectionIndex.value - 1].id;
   }
 };
 </script>
