@@ -8,8 +8,7 @@ export default defineConfig({
   base: '/vmc-query-builder/',
   plugins: [vue()],
   build: {
-
-
-    outDir: resolve(__dirname, '../docs')
+    outDir: resolve(__dirname, '../docs'),
+    emptyOutDir: true
   }
 })
