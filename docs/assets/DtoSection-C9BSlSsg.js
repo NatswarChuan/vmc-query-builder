@@ -1,4 +1,4 @@
-import{_ as s}from"./CodeBlock-BK92jf-v.js";import{r as n,c,o as p,b as e,d as o,e as r}from"./index-DdSB5D2R.js";const u={id:"dto",class:"mb-12 space-y-4 scroll-mt-20"},d={id:"dto-mechanism",class:"scroll-mt-20 pt-4"},h={class:"space-y-4"},D={id:"dto-usage",class:"scroll-mt-20 pt-4"},T={__name:"DtoSection",setup(v){const i=n(`
+import{_ as s}from"./CodeBlock-BI-7EVGF.js";import{r as n,c,o as p,b as e,d as o,e as r}from"./index-BVd1TkhY.js";const u={id:"dto",class:"mb-12 space-y-4 scroll-mt-20"},d={id:"dto-mechanism",class:"scroll-mt-20 pt-4"},h={class:"space-y-4"},D={id:"dto-usage",class:"scroll-mt-20 pt-4"},T={__name:"DtoSection",setup(v){const i=n(`
 // Trong UserCreateRequestDto.java
 @Override
 public User toEntity() {

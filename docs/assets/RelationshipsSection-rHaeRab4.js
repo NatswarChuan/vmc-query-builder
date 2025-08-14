@@ -1,4 +1,4 @@
-import{_ as o}from"./CodeBlock-BK92jf-v.js";import{r as s,c as d,o as h,b as n,d as l,e as t,a as m}from"./index-DdSB5D2R.js";const p={id:"anh-xa-quan-he",class:"mb-12 space-y-4 scroll-mt-20"},v={id:"onetoone",class:"scroll-mt-20 pt-4"},g={id:"onetomany",class:"scroll-mt-20 pt-4"},y={id:"manytomany",class:"scroll-mt-20 pt-4"},M={id:"lazy-loading",class:"scroll-mt-20 pt-4"},x={class:"space-y-6"},f={__name:"RelationshipsSection",setup(C){const a=s(`
+import{_ as o}from"./CodeBlock-BI-7EVGF.js";import{r as s,c as d,o as h,b as n,d as l,e as t,a as m}from"./index-BVd1TkhY.js";const p={id:"anh-xa-quan-he",class:"mb-12 space-y-4 scroll-mt-20"},v={id:"onetoone",class:"scroll-mt-20 pt-4"},g={id:"onetomany",class:"scroll-mt-20 pt-4"},y={id:"manytomany",class:"scroll-mt-20 pt-4"},M={id:"lazy-loading",class:"scroll-mt-20 pt-4"},x={class:"space-y-6"},f={__name:"RelationshipsSection",setup(C){const a=s(`
 // Trong User.java
 @VMCOneToOne(mappedBy = "user")
 private UserProfile profile;

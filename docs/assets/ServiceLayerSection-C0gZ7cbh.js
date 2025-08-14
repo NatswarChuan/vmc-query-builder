@@ -1,4 +1,4 @@
-import{_ as s}from"./CodeBlock-BK92jf-v.js";import{r as c,c as o,o as i,b as t,d as a}from"./index-DdSB5D2R.js";const n={id:"service-layer",class:"mb-12 space-y-4 scroll-mt-20"},m={__name:"ServiceLayerSection",setup(p){const r=c(`
+import{_ as s}from"./CodeBlock-BI-7EVGF.js";import{r as c,c as o,o as i,b as t,d as a}from"./index-BVd1TkhY.js";const n={id:"service-layer",class:"mb-12 space-y-4 scroll-mt-20"},m={__name:"ServiceLayerSection",setup(p){const r=c(`
 // Trong UserService.java
 import io.github.natswarchuan.vmc.core.persistence.service.SaveOptions;
 import io.github.natswarchuan.vmc.core.service.AbstractVMCService;

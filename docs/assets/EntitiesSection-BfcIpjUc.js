@@ -1,4 +1,4 @@
-import{_ as l}from"./CodeBlock-BK92jf-v.js";import{r as i,c as o,o as r,b as t,d as s,e as n}from"./index-DdSB5D2R.js";const c={id:"dinh-nghia-entities",class:"mb-12 space-y-4 scroll-mt-20"},b={__name:"EntitiesSection",setup(m){const a=i(`
+import{_ as l}from"./CodeBlock-BI-7EVGF.js";import{r as i,c as o,o as r,b as t,d as s,e as n}from"./index-BVd1TkhY.js";const c={id:"dinh-nghia-entities",class:"mb-12 space-y-4 scroll-mt-20"},b={__name:"EntitiesSection",setup(m){const a=i(`
 package io.github.natswarchuan.vmc.entity;
 
 import io.github.natswarchuan.vmc.core.annotation.*;

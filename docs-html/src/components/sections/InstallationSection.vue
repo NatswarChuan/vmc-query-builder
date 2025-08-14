@@ -37,25 +37,6 @@ const mavenConfig = ref(`
         <version>\${vmc.version}</version>
     </dependency>
 
-    <!-- Spring Boot Starter cho việc xây dựng ứng dụng web, bao gồm RESTful API -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-
-    <!-- Spring Boot Starter cho việc xác thực dữ liệu (validation) -->
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-validation</artifactId>
-    </dependency>
-
-    <!-- Cung cấp trình kết nối JDBC cho MySQL để ứng dụng có thể giao tiếp với cơ sở dữ liệu MySQL -->
-    <dependency>
-        <groupId>com.mysql</groupId>
-        <artifactId>mysql-connector-j</artifactId>
-        <scope>runtime</scope>
-    </dependency>
-
     <!-- lombok cho việc tạo các getter, setter và constructor đơn giản -->
     <dependency>
         <groupId>org.projectlombok</groupId>

@@ -1,4 +1,4 @@
-import{_ as e}from"./CodeBlock-BK92jf-v.js";import{r as n,c as u,o as m,b as i,a as s,d as a,e as o}from"./index-DdSB5D2R.js";const h={id:"validation",class:"scroll-mt-16"},g={id:"validation-field",class:"scroll-mt-20 pt-4"},p={id:"validation-class",class:"scroll-mt-20 pt-4"},C={__name:"ValidationSection",setup(y){const l=n(`
+import{_ as e}from"./CodeBlock-BI-7EVGF.js";import{r as n,c as u,o as m,b as i,a as s,d as a,e as o}from"./index-BVd1TkhY.js";const h={id:"validation",class:"scroll-mt-16"},g={id:"validation-field",class:"scroll-mt-20 pt-4"},p={id:"validation-class",class:"scroll-mt-20 pt-4"},C={__name:"ValidationSection",setup(y){const l=n(`
 // Ví dụ: Kiểm tra email duy nhất khi tạo user
 import io.github.natswarchuan.vmc.core.annotation.validation.VMCQueryRule;
 import io.github.natswarchuan.vmc.entity.User;

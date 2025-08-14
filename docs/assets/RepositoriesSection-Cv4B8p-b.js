@@ -1,4 +1,4 @@
-import{_ as r}from"./CodeBlock-BK92jf-v.js";import{r as s,c as i,o as a,b as t,d as n}from"./index-DdSB5D2R.js";const c={id:"tao-repositories",class:"mb-12 space-y-4 scroll-mt-20"},y={__name:"RepositoriesSection",setup(p){const e=s(`
+import{_ as r}from"./CodeBlock-BI-7EVGF.js";import{r as s,c as i,o as a,b as t,d as n}from"./index-BVd1TkhY.js";const c={id:"tao-repositories",class:"mb-12 space-y-4 scroll-mt-20"},y={__name:"RepositoriesSection",setup(p){const e=s(`
 package io.github.natswarchuan.vmc.repository;
 
 import io.github.natswarchuan.vmc.core.repository.VMCRepository;
