@@ -4,10 +4,14 @@ body {
 
 .code-block {
   position: relative;
+  /* Cập nhật màu nền để khớp với theme VS2015 */
   background-color: #1E1E1E;
   padding: 1rem;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  overflow-x: auto;
+  /* Thêm thanh cuộn ngang nếu mã quá dài */
+  border: 1px solid #3c3c3c;
+  /* Thêm viền cho khối mã */
 }
 
 .copy-btn {
@@ -37,21 +41,4 @@ body {
 .nav-sublink.active {
   color: #2b6cb0;
   font-weight: 500;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
 }
